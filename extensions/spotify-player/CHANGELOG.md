@@ -1,5 +1,21 @@
 # Spotify Player Changelog
 
+## [Add "Skip 15 Seconds" and "Back 15 Seconds" commands] - 2025-02-18
+
+- Added the ability to skip forward or back 15 seconds in the current episode. This adds two new commands as well as two new menu bar items which only show when an 'episode' is playing.
+
+## [Artist Name Visibility Option] - 2025-02-07
+
+- Added the option to hide the artist's name in the Menu Bar Player.
+
+## [Fix Your Library] - 2025-02-04
+
+- Fix a possibly null issue from `getMeAlbums` API.
+
+## [Generate Playlist Improvement - Artists] - 2024-12-03
+
+- Modify the prompt so if the description contains "songs from: artist1, artist2, etc" it will only generate a playlist using those artists
+
 ## [Fix Search Command] - 2024-11-22
 
 - Even though it's not documented, the Spotify API can return null items in some cases when searching for items. This has now been fixed.
