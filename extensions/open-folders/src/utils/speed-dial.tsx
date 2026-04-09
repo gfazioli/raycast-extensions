@@ -13,8 +13,9 @@ export function SpeedDialGrid({ items }: { items: (string | undefined)[] }) {
       aspectRatio="4/3"
       filtering={false}
       onSearchTextChange={(text) => {
+        if (!/^\d+$/.test(text)) return;
         const num = Number.parseInt(text, 10);
-        if (!Number.isNaN(num) && num >= 1 && num <= entries.length) {
+        if (num >= 1 && num <= entries.length) {
           const entry = entries[num - 1];
           if (entry) open(entry.path);
         }

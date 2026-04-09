@@ -1,4 +1,3 @@
-import { showToast, Toast } from "@raycast/api";
 import { readdirSync, statSync, type Dirent } from "fs";
 import { join } from "path";
 
@@ -32,29 +31,37 @@ function toEntry(item: Dirent): FileEntry {
   };
 }
 
-export function readDirectorySafe(dir: string): FileEntry[] {
+export type ReadResult = {
+  entries: FileEntry[];
+  error?: string;
+};
+
+export function readDirectorySafe(dir: string): ReadResult {
   try {
-    return readdirSync(dir, { withFileTypes: true })
+    const entries = readdirSync(dir, { withFileTypes: true })
       .filter((item) => !item.name.startsWith("."))
       .map(toEntry);
+    return { entries };
   } catch (error) {
-    showToast({
-      style: Toast.Style.Failure,
-      title: "Cannot read directory",
-      message: error instanceof Error ? error.message : String(error),
-    });
-    return [];
+    return {
+      entries: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
-export function readFiles(dir: string): FileEntry[] {
-  return readDirectorySafe(dir)
-    .filter((e) => e.isFile)
-    .sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
+export function readFiles(dir: string): ReadResult {
+  const result = readDirectorySafe(dir);
+  return {
+    ...result,
+    entries: result.entries.filter((e) => e.isFile).sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime()),
+  };
 }
 
-export function readFolders(dir: string): FileEntry[] {
-  return readDirectorySafe(dir)
-    .filter((e) => e.isDirectory)
-    .sort((a, b) => a.name.localeCompare(b.name));
+export function readFolders(dir: string): ReadResult {
+  const result = readDirectorySafe(dir);
+  return {
+    ...result,
+    entries: result.entries.filter((e) => e.isDirectory).sort((a, b) => a.name.localeCompare(b.name)),
+  };
 }

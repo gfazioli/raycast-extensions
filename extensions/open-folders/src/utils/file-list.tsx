@@ -37,8 +37,14 @@ function FileActions({
       <Action.Open
         title={`Open ${entry.name}`}
         target={entry.fullPath}
-        onOpen={() => {
-          if (entry.isDirectory) addRecentFolder(entry.fullPath);
+        onOpen={async () => {
+          if (entry.isDirectory) {
+            try {
+              await addRecentFolder(entry.fullPath);
+            } catch {
+              /* ignore storage errors */
+            }
+          }
         }}
       />
       {navigable && entry.isDirectory && (
@@ -47,7 +53,7 @@ function FileActions({
           icon={Icon.ArrowRight}
           shortcut={{ modifiers: ["cmd"], key: "arrowRight" }}
           onAction={() => {
-            const children = readFolders(entry.fullPath);
+            const { entries: children } = readFolders(entry.fullPath);
             push(
               <List navigationTitle={entry.name}>
                 {children.map((child) => (
@@ -101,8 +107,9 @@ export function FileList({ items, layout, showPins, navigable }: FileListProps) 
     getPinnedFolders().then(setPinnedPaths);
   }
 
-  const pinned = showPins ? items.filter((e) => pinnedPaths.includes(e.fullPath)) : [];
-  const unpinned = showPins ? items.filter((e) => !pinnedPaths.includes(e.fullPath)) : items;
+  const pinnedSet = new Set(pinnedPaths);
+  const pinned = showPins ? items.filter((e) => pinnedSet.has(e.fullPath)) : [];
+  const unpinned = showPins ? items.filter((e) => !pinnedSet.has(e.fullPath)) : items;
 
   if (layout === "List") {
     return (
