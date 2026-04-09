@@ -5,7 +5,7 @@ type VersionAPIResponse = {
   version: string;
 };
 
-const INITIAL_VERSION_STORAGE = 10700;
+const INITIAL_VERSION_STORAGE = 1_007_000;
 
 /**
  * Custom hook to manage version checking and storage for the application.
@@ -30,14 +30,19 @@ export function useVersion() {
   } = useLocalStorage("wpbones-version", INITIAL_VERSION_STORAGE);
 
   function versionToNumber(ver: string): number {
-    const parts = ver.split(".").map((p) => parseInt(p, 10));
-    return (parts[0] ?? 0) * 10000 + (parts[1] ?? 0) * 100 + (parts[2] ?? 0);
+    const parts = ver.split(".").map((p) => {
+      const n = parseInt(p, 10);
+      return Number.isNaN(n) ? 0 : n;
+    });
+    return (parts[0] ?? 0) * 1_000_000 + (parts[1] ?? 0) * 1_000 + (parts[2] ?? 0);
   }
 
   useEffect(() => {
     if (data && versionStorage !== undefined) {
+      // Migrate old storage format (170) to new format (1_007_000)
+      const stored = versionStorage < 10000 ? versionStorage * 1000 : versionStorage;
       const num = versionToNumber(data.version);
-      if (num > versionStorage) {
+      if (num > stored) {
         setIsThereNewVersion(true);
       }
       setVersion(data.version);

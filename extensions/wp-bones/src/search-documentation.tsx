@@ -21,10 +21,13 @@ export default function Command() {
 
   const shouldFetch = searchText.trim().length >= 3;
 
-  const { data, isLoading } = useFetch<Document[]>(shouldFetch ? `${API_URL}${encodeURIComponent(searchText)}` : "", {
-    execute: shouldFetch,
-    keepPreviousData: true,
-  });
+  const { data, error, isLoading } = useFetch<Document[]>(
+    shouldFetch ? `${API_URL}${encodeURIComponent(searchText)}` : "",
+    {
+      execute: shouldFetch,
+      keepPreviousData: true,
+    },
+  );
 
   const entries = Array.isArray(data) ? data.filter((d): d is Document => "title" in d && "items" in d) : [];
 
@@ -40,7 +43,15 @@ export default function Command() {
         <List.EmptyView icon={Icon.MagnifyingGlass} title="Type to search" description="Enter at least 3 characters" />
       )}
 
-      {shouldFetch && entries.length === 0 && !isLoading && (
+      {shouldFetch && error && (
+        <List.EmptyView
+          icon={{ source: Icon.ExclamationMark, tintColor: "red" }}
+          title="Failed to search"
+          description={error.message}
+        />
+      )}
+
+      {shouldFetch && !error && entries.length === 0 && !isLoading && (
         <List.EmptyView icon={Icon.XMarkCircle} title="No results" description={`No results for "${searchText}"`} />
       )}
 
@@ -57,7 +68,7 @@ export default function Command() {
                   <Action.CopyToClipboard
                     title="Copy URL"
                     content={item.url.replace(/\.html/g, "")}
-                    shortcut={{ modifiers: ["cmd"], key: "c" }}
+                    shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
                   />
                 </ActionPanel>
               }

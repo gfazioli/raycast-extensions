@@ -1,6 +1,6 @@
 import { AI, Action, ActionPanel, Detail, Icon, LaunchProps } from "@raycast/api";
 import { useFetch } from "@raycast/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const API_URL = "https://wpbones.com/api/search?q=";
 
@@ -20,6 +20,8 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
   const question = props.arguments.question;
   const [answer, setAnswer] = useState("");
   const [isAsking, setIsAsking] = useState(false);
+  const isAskingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const searchQuery = question.split(" ").slice(0, 3).join(" ");
   const { data: docs, isLoading: isLoadingDocs } = useFetch<Document[]>(
@@ -28,8 +30,14 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
   );
 
   useEffect(() => {
-    if (!docs || isAsking) return;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
+  useEffect(() => {
+    if (!docs || isAskingRef.current) return;
+    isAskingRef.current = true;
     setIsAsking(true);
 
     const context = Array.isArray(docs)
@@ -49,11 +57,22 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
     });
 
     stream.on("data", (chunk) => {
-      setAnswer((prev) => prev + chunk);
+      if (mountedRef.current) setAnswer((prev) => prev + chunk);
     });
 
-    stream.then(() => setIsAsking(false)).catch(() => setIsAsking(false));
-  }, [docs]);
+    stream
+      .then(() => {
+        isAskingRef.current = false;
+        if (mountedRef.current) setIsAsking(false);
+      })
+      .catch(() => {
+        isAskingRef.current = false;
+        if (mountedRef.current) {
+          setIsAsking(false);
+          setAnswer("Failed to get AI response. Please try again.");
+        }
+      });
+  }, [docs, question]);
 
   return (
     <Detail
