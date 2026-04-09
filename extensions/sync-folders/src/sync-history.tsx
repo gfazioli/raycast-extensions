@@ -38,7 +38,7 @@ export default function Command() {
             subtitle={`${entry.source_folder} → ${entry.dest_folder}`}
             accessories={[
               { text: formatDuration(entry.duration) },
-              { text: entry.fileCount !== undefined ? `${entry.fileCount} files` : undefined },
+              ...(entry.fileCount !== undefined ? [{ text: `${entry.fileCount} files` }] : []),
               { date: new Date(entry.timestamp) },
             ]}
             actions={

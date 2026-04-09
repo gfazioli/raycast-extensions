@@ -1,6 +1,6 @@
 # Sync Folders Changelog
 
-## [Security & Bug Fixes] - {PR_MERGE_DATE}
+## [Security & Bug Fixes] - 2026-04-09
 
 ### Security
 - Fixed command injection vulnerability: replaced `exec` with `execFile` and argument arrays in rsync execution

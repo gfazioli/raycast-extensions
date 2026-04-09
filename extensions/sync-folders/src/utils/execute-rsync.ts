@@ -8,13 +8,15 @@ export type RsyncResult = {
   success: boolean;
   output: string;
   error?: string;
+  warning?: string;
   fileCount?: number;
   duration: number;
 };
 
 function buildArgs(sync_folders: SyncFolders, dryRun = false): string[] {
-  const args = ["-a", "--exclude", "._*"];
+  const args = ["-a", "-E", "--exclude", "._*"];
   if (dryRun) args.push("--dry-run", "--itemize-changes");
+  else args.push("--stats");
   if (sync_folders.delete_dest) args.push("--delete");
 
   if (sync_folders.exclude_patterns) {
@@ -31,15 +33,22 @@ function buildArgs(sync_folders: SyncFolders, dryRun = false): string[] {
   return args;
 }
 
+function parseFileCount(stdout: string, isDryRun: boolean): number {
+  if (isDryRun) {
+    return stdout.split("\n").filter((l) => l.trim().length > 0).length;
+  }
+  const match = stdout.match(/Number of regular files transferred:\s*(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
 async function runRsync(args: string[]): Promise<RsyncResult> {
   const start = Date.now();
+  const isDryRun = args.includes("--dry-run");
   try {
     const { stdout, stderr } = await execFileAsync("rsync", args, { timeout: 300000 });
-    const fileCount = stdout.split("\n").filter((l) => l.trim().length > 0).length;
-    if (stderr && stderr.trim()) {
-      return { success: false, output: stdout, error: stderr.trim(), fileCount: 0, duration: Date.now() - start };
-    }
-    return { success: true, output: stdout, fileCount, duration: Date.now() - start };
+    const fileCount = parseFileCount(stdout, isDryRun);
+    const warning = stderr && stderr.trim() ? stderr.trim() : undefined;
+    return { success: true, output: stdout, warning, fileCount, duration: Date.now() - start };
   } catch (err: unknown) {
     const error = err as { stderr?: string; message?: string };
     return {

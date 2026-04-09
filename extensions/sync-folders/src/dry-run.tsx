@@ -1,5 +1,5 @@
 import { AI, Action, ActionPanel, Detail, Icon, showToast, Toast } from "@raycast/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSyncFolders } from "./hooks";
 import { SyncFolders } from "./types";
 import { executeDryRun } from "./utils";
@@ -55,6 +55,7 @@ export function DryRunView({ syncFolder }: { syncFolder: SyncFolders }) {
   const [markdown, setMarkdown] = useState("#### Running dry run...\n\n*Analyzing changes...*");
   const [isLoading, setIsLoading] = useState(true);
   const [aiAdvice, setAiAdvice] = useState("");
+  const cachedParsed = useRef<{ added: string[]; deleted: string[]; updated: string[] } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -66,23 +67,23 @@ export function DryRunView({ syncFolder }: { syncFolder: SyncFolders }) {
       }
 
       const parsed = parseDryRunOutput(result.output);
+      cachedParsed.current = parsed;
       setMarkdown(buildMarkdown(syncFolder, parsed));
       setIsLoading(false);
     })();
-  }, []);
+  }, [syncFolder]);
 
   async function getAiAdvice() {
     const toast = await showToast({ style: Toast.Style.Animated, title: "Getting AI advice..." });
 
     try {
-      const result = await executeDryRun(syncFolder);
-      if (!result.success) {
+      const parsed = cachedParsed.current;
+      if (!parsed) {
         toast.style = Toast.Style.Failure;
-        toast.title = "Dry run failed";
+        toast.title = "Dry run not ready";
         return;
       }
 
-      const parsed = parseDryRunOutput(result.output);
       const total = parsed.added.length + parsed.updated.length + parsed.deleted.length;
 
       if (total === 0) {
