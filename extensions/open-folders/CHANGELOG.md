@@ -1,5 +1,34 @@
 # Open Changelog
 
+## [Code Quality & Bug Fixes] - {PR_MERGE_DATE}
+
+### Bug Fixes
+- Fixed crash when opening most recent download from an empty directory
+- Fixed `parseInt` NaN handling in speed dial keyboard shortcuts (1-8)
+- Fixed file icons not showing in List Downloads (was using filename instead of full path)
+
+### New Commands
+- **Open Trash** — Open the Trash folder in Finder
+- **Recent Folders** — List of recently opened folders from this extension, with "Clear" action
+
+### New Features
+- **Quick Look** (⌘Y) — Preview files without opening them
+- **Move to Trash** (⌃X) — Delete files directly from List Downloads
+- **Pin Folders** (⌘⇧P) — Pin folders in List User Folders so they appear at the top
+- **Subfolder Navigation** (⌘→) — Browse into subfolders without leaving Raycast
+- **File Size** — Shown as accessory text in List Downloads
+- **Show in Finder** and **Copy Path** (⌘C) actions on all items
+
+### Improvements
+- Extracted shared `SpeedDialGrid` component — eliminates code duplication between file and folder speed dials
+- Extracted shared `FileList` component — unified List/Grid rendering for List Downloads and List User Folders
+- Extracted shared `readDirectorySafe` utility — centralized directory reading with error handling
+- Added `try-catch` around all directory reads with user-facing error toasts
+- Used `path.join()` for proper path construction throughout
+- Replaced loose equality (`!=`) with strict equality
+- Removed unused `decs.d.ts` file
+- Fixed inconsistent indentation in package.json
+
 ## [Fixed the Folder and Files Speed Dial keyboard exception] - 2024-10-09
 
 ## [Fixes the Folder and Files Speed Dial commands] - 2024-06-27
