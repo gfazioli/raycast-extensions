@@ -20,9 +20,10 @@ type WarningAdvice = {
 
 function parseAdvice(raw: string): WarningAdvice {
   const severity = raw.match(/SEVERITY:\s*(.+)/)?.[1]?.trim() ?? "🟡 Minor";
-  const explanation = raw.match(/EXPLANATION:\s*(.+)/)?.[1]?.trim() ?? "Unable to analyze this warning.";
+  const explanation =
+    raw.match(/EXPLANATION:\s*([\s\S]*?)(?=\nFIX:|$)/)?.[1]?.trim() ?? "Unable to analyze this warning.";
   const fix = raw.match(/FIX:\s*([\s\S]*?)(?=\nRISK:|$)/)?.[1]?.trim() ?? "No fix available.";
-  const risk = raw.match(/RISK:\s*(.+)/)?.[1]?.trim() ?? "Unknown";
+  const risk = raw.match(/RISK:\s*([\s\S]*?)$/)?.[1]?.trim() ?? "Unknown";
   return { severity, explanation, fix, risk };
 }
 

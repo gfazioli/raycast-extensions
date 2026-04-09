@@ -129,36 +129,45 @@ async function fetchAppcast(url: string): Promise<string | null> {
   }
 }
 
+const BATCH_SIZE = 5;
+
+async function checkApp(app: AppInfo): Promise<AppUpdate | null> {
+  const xml = await fetchAppcast(app.feedUrl);
+  if (!xml) {
+    console.log(`[Sparkle] Failed to fetch appcast for ${app.name}: ${app.feedUrl}`);
+    return null;
+  }
+
+  const latest = extractLatestVersion(xml);
+  if (!latest) {
+    console.log(`[Sparkle] Failed to parse version from appcast for ${app.name}`);
+    return null;
+  }
+
+  if (!compareVersions(app.version, latest.version)) return null;
+
+  return {
+    name: app.name,
+    currentVersion: app.version,
+    latestVersion: latest.version,
+    source: "sparkle",
+    downloadUrl: latest.url || app.feedUrl,
+    appPath: app.appPath,
+    bundleId: app.bundleId,
+  };
+}
+
 export async function scanSparkleUpdates(onProgress?: (current: number, total: number) => void): Promise<AppUpdate[]> {
   const apps = await getSparkleApps();
   const updates: AppUpdate[] = [];
 
-  for (let i = 0; i < apps.length; i++) {
-    const app = apps[i];
-    onProgress?.(i + 1, apps.length);
+  for (let i = 0; i < apps.length; i += BATCH_SIZE) {
+    const batch = apps.slice(i, i + BATCH_SIZE);
+    onProgress?.(Math.min(i + BATCH_SIZE, apps.length), apps.length);
 
-    const xml = await fetchAppcast(app.feedUrl);
-    if (!xml) {
-      console.log(`[Sparkle] Failed to fetch appcast for ${app.name}: ${app.feedUrl}`);
-      continue;
-    }
-
-    const latest = extractLatestVersion(xml);
-    if (!latest) {
-      console.log(`[Sparkle] Failed to parse version from appcast for ${app.name}`);
-      continue;
-    }
-
-    if (compareVersions(app.version, latest.version)) {
-      updates.push({
-        name: app.name,
-        currentVersion: app.version,
-        latestVersion: latest.version,
-        source: "sparkle",
-        downloadUrl: latest.url || app.feedUrl,
-        appPath: app.appPath,
-        bundleId: app.bundleId,
-      });
+    const results = await Promise.all(batch.map(checkApp));
+    for (const result of results) {
+      if (result) updates.push(result);
     }
   }
 

@@ -19,13 +19,7 @@ import {
 } from "./utils/brew-maintenance";
 
 function getOptions(): BrewMaintenanceOptions {
-  const prefs = getPreferenceValues<{
-    brewRunUpdate: boolean;
-    brewUpgradeFormulae: boolean;
-    brewUpgradeCasks: boolean;
-    brewRunDoctor: boolean;
-    brewRunCleanup: boolean;
-  }>();
+  const prefs = getPreferenceValues<Preferences.BrewMaintenance>();
 
   return {
     runUpdate: prefs.brewRunUpdate ?? true,
