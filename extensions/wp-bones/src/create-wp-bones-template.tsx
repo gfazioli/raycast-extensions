@@ -1,8 +1,38 @@
-import { Action, ActionPanel, Grid } from "@raycast/api";
+import { Action, ActionPanel, Detail, Grid, Icon } from "@raycast/api";
+import { useFetch } from "@raycast/utils";
 import { useEffect, useState } from "react";
 import { Boilerplate } from "./hooks/types";
 import { useBoilerplates } from "./hooks/use-boilerplates";
 import { getIcon } from "./utils";
+
+function BoilerplatePreview({ boilerplate }: { boilerplate: Boilerplate }) {
+  const readmeUrl = `https://raw.githubusercontent.com/wpbones/${boilerplate.name}/master/README.md`;
+  const { data, isLoading } = useFetch<string>(readmeUrl, {
+    parseResponse: (response) => response.text(),
+  });
+
+  return (
+    <Detail
+      isLoading={isLoading}
+      navigationTitle={boilerplate.title}
+      markdown={data || "Loading README..."}
+      actions={
+        <ActionPanel>
+          <Action.OpenInBrowser
+            title="Create in GitHub"
+            icon="github-white.png"
+            url={`https://github.com/new?template_name=${boilerplate.name}&template_owner=wpbones`}
+          />
+          <Action.OpenInBrowser
+            title="See in Action"
+            icon="brand-wordpress.svg"
+            url={`https://playground.wordpress.net/?blueprint-url=https://www.wpbones.com/wpkirk${boilerplate.slug === "base" ? "" : `-${boilerplate.slug}`}-boilerplate.json`}
+          />
+        </ActionPanel>
+      }
+    />
+  );
+}
 
 export default function Command() {
   const [searchText, setSearchText] = useState("");
@@ -42,6 +72,12 @@ export default function Command() {
                   title="Create in GitHub"
                   icon="github-white.png"
                   url={`https://github.com/new?template_name=${item.name}&template_owner=wpbones`}
+                />
+                <Action.Push
+                  title="Preview Readme"
+                  icon={Icon.Eye}
+                  shortcut={{ modifiers: ["cmd"], key: "p" }}
+                  target={<BoilerplatePreview boilerplate={item} />}
                 />
                 <Action.OpenInBrowser
                   title="See in Action"
