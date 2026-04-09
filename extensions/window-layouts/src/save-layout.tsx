@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Form, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Form, popToRoot, showToast, Toast } from "@raycast/api";
 import { getDesktopContext } from "./utils";
 import { saveLayout, type SavedWindow } from "./utils/saved-layouts";
 
@@ -14,7 +14,7 @@ export default function Command() {
     if (!context) return;
 
     const windows: SavedWindow[] = context.windows
-      .filter((w) => w.bounds && w.bounds !== "fullscreen")
+      .filter((w) => typeof w.bounds === "object" && w.bounds !== null && "position" in w.bounds)
       .map((w) => {
         const bounds = w.bounds as { position: { x: number; y: number }; size: { width: number; height: number } };
         return {
@@ -39,6 +39,7 @@ export default function Command() {
       title: `Layout "${name}" saved`,
       message: `${windows.length} window(s)`,
     });
+    await popToRoot();
   }
 
   return (

@@ -217,8 +217,8 @@ export async function createLayout(layout: Layout, existingContext?: DesktopCont
     }
   } catch (error) {
     console.error("Error arranging windows:", error);
-    await showFailureToast("Failed to arrange windows", {
-      message: error instanceof Error ? error.message : undefined,
-    });
+    toast.style = Toast.Style.Failure;
+    toast.title = "Failed to arrange windows";
+    toast.message = error instanceof Error ? error.message : undefined;
   }
 }

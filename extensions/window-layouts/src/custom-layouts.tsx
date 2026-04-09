@@ -30,7 +30,11 @@ export default function Command() {
 
   function gridPreview(grid: number[][]): string {
     const rows = grid.length;
-    const cols = grid[0].length;
+    const firstRow = grid[0];
+    if (rows === 0 || !Array.isArray(firstRow)) {
+      return "Invalid grid";
+    }
+    const cols = firstRow.length;
     const windowCount = new Set(grid.flat()).size;
     return `${rows}×${cols} grid, ${windowCount} windows`;
   }

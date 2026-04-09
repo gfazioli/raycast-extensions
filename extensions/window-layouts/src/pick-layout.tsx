@@ -99,9 +99,11 @@ export default function Command() {
     if (failures > 0) {
       toast.style = Toast.Style.Failure;
       toast.title = `${failures} window(s) could not be arranged`;
-    } else {
+    } else if (!preferences.disableToasts) {
       toast.style = Toast.Style.Success;
       toast.title = "Windows arranged";
+    } else {
+      toast.hide();
     }
   }
 

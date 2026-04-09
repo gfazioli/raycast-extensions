@@ -1,14 +1,7 @@
 import { getPreferenceValues } from "@raycast/api";
 
-type UserPreferences = Readonly<{
-  gap: number;
-  disableToasts: boolean;
-  keepWindowOpenAfterTiling: boolean;
-  excludedApps: string[];
-}>;
-
-export function getUserPreferences(): UserPreferences {
-  const userPreferences = getPreferenceValues();
+export function getUserPreferences() {
+  const userPreferences = getPreferenceValues<Preferences>();
   const gap = parseInt(userPreferences.gap as string, 10);
   const rawExcluded = (userPreferences.excludedApps as string) ?? "";
 
