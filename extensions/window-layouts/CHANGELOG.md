@@ -31,6 +31,11 @@
 - Made `getUserPreferences` synchronous (underlying `getPreferenceValues` is sync)
 - Exported `calculateCellSize` and `getWindowFrames` for reuse by Pick Layout command
 - Restore Layout now correctly handles multiple windows from the same app
+- Confirm dialogs before deleting or overwriting saved and custom layouts
+- Pick Layout shows actual app icons and layout-specific icons
+- Pick Layout reorder shortcuts changed to ⌥↑/⌥↓ (fixes conflict with section navigation)
+- Custom Layouts list includes "Create Custom Layout" action (⌘N)
+- All delete actions use standard Raycast shortcut (⌃X)
 
 ## [Improvements] - 2024-11-20
 

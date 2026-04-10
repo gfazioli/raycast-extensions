@@ -54,7 +54,7 @@ You can choose a gap in extension settings that is applied between and around th
 ## Smart Commands
 
 - **Auto Layout** — Automatically picks the best layout based on the number of open windows
-- **Pick Layout** — Browse all layouts and reorder windows to decide which goes in which slot
+- **Pick Layout** — Browse all layouts with their icons, reorder windows (⌥↑/⌥↓) to decide which goes in which slot. Shows actual app icons for easy identification
 
 ## Save & Restore
 
@@ -64,7 +64,7 @@ You can choose a gap in extension settings that is applied between and around th
 ## Custom Layouts
 
 - **Create Custom Layout** — Define your own layout using a JSON grid (e.g. `[[1,1,2],[3,4,2]]`)
-- **Custom Layouts** — Browse and apply your custom layouts
+- **Custom Layouts** — Browse, apply, and manage your custom layouts. Create new layouts directly from the list (⌘N). Confirmation dialogs protect against accidental deletions and overwrites
 
 ## Preferences
 
