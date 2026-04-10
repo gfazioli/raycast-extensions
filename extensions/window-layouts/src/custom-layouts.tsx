@@ -1,5 +1,6 @@
-import { Action, ActionPanel, Icon, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Alert, confirmAlert, Icon, Keyboard, List, showToast, Toast } from "@raycast/api";
 import { useEffect, useState } from "react";
+import { CreateCustomLayout } from "./create-custom-layout";
 import { createLayout } from "./utils";
 import { deleteCustomLayout, getCustomLayouts, type CustomLayout } from "./utils/custom-layouts";
 
@@ -23,6 +24,14 @@ export default function Command() {
   }
 
   async function handleDelete(layout: CustomLayout) {
+    const isConfirmed = await confirmAlert({
+      title: `Delete "${layout.name}"?`,
+      primaryAction: { title: "Delete", style: Alert.ActionStyle.Destructive },
+      dismissAction: { title: "Cancel" },
+    });
+
+    if (!isConfirmed) return;
+
     await deleteCustomLayout(layout.name);
     await loadLayouts();
     await showToast({ style: Toast.Style.Success, title: `Deleted "${layout.name}"` });
@@ -45,6 +54,16 @@ export default function Command() {
         <List.EmptyView
           title="No Custom Layouts"
           description="Use 'Create Custom Layout' to define your own grid layouts."
+          actions={
+            <ActionPanel>
+              <Action.Push
+                title="Create Custom Layout"
+                icon={Icon.Plus}
+                shortcut={Keyboard.Shortcut.Common.New}
+                target={<CreateCustomLayout onCreate={loadLayouts} />}
+              />
+            </ActionPanel>
+          }
         />
       ) : (
         layouts.map((layout) => (
@@ -56,11 +75,17 @@ export default function Command() {
             actions={
               <ActionPanel>
                 <Action title="Apply Layout" icon={Icon.Check} onAction={() => handleApply(layout)} />
+                <Action.Push
+                  title="Create Custom Layout"
+                  icon={Icon.Plus}
+                  shortcut={Keyboard.Shortcut.Common.New}
+                  target={<CreateCustomLayout onCreate={loadLayouts} />}
+                />
                 <Action
                   title="Delete Layout"
                   icon={Icon.Trash}
                   style={Action.Style.Destructive}
-                  shortcut={{ modifiers: ["cmd"], key: "d" }}
+                  shortcut={Keyboard.Shortcut.Common.Remove}
                   onAction={() => handleDelete(layout)}
                 />
               </ActionPanel>

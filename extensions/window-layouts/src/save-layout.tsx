@@ -28,11 +28,13 @@ export default function Command() {
         };
       });
 
-    await saveLayout({
+    const saved = await saveLayout({
       name,
       windows,
       savedAt: new Date().toISOString(),
     });
+
+    if (!saved) return;
 
     await showToast({
       style: Toast.Style.Success,

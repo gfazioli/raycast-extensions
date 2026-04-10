@@ -1,8 +1,14 @@
-import { Action, ActionPanel, Form, showToast, Toast, popToRoot } from "@raycast/api";
+import { Action, ActionPanel, Form, popToRoot, showToast, Toast, useNavigation } from "@raycast/api";
 import { validateLayout, getLayoutValidationMessage } from "./utils";
 import { saveCustomLayout } from "./utils/custom-layouts";
 
-export default function Command() {
+type CreateCustomLayoutProps = {
+  onCreate?: () => void;
+};
+
+export function CreateCustomLayout({ onCreate }: CreateCustomLayoutProps) {
+  const { pop } = useNavigation();
+
   async function handleSubmit(values: { name: string; grid: string }) {
     const name = values.name.trim();
     if (!name) {
@@ -35,17 +41,25 @@ export default function Command() {
       return;
     }
 
-    await saveCustomLayout({
+    const saved = await saveCustomLayout({
       name,
       grid,
       createdAt: new Date().toISOString(),
     });
 
+    if (!saved) return;
+
     await showToast({
       style: Toast.Style.Success,
       title: `Layout "${name}" created`,
     });
-    await popToRoot();
+
+    if (onCreate) {
+      pop();
+      onCreate();
+    } else {
+      await popToRoot();
+    }
   }
 
   return (
@@ -72,4 +86,9 @@ export default function Command() {
       />
     </Form>
   );
+}
+
+// Default export for standalone command usage
+export default function Command() {
+  return <CreateCustomLayout />;
 }

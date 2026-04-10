@@ -1,4 +1,4 @@
-import { LocalStorage } from "@raycast/api";
+import { Alert, confirmAlert, LocalStorage } from "@raycast/api";
 
 const STORAGE_KEY = "saved-layouts";
 
@@ -28,15 +28,26 @@ export async function getSavedLayouts(): Promise<SavedLayout[]> {
   }
 }
 
-export async function saveLayout(layout: SavedLayout): Promise<void> {
+export async function saveLayout(layout: SavedLayout): Promise<boolean> {
   const layouts = await getSavedLayouts();
   const existing = layouts.findIndex((l) => l.name === layout.name);
+
   if (existing >= 0) {
+    const isConfirmed = await confirmAlert({
+      title: `A layout named "${layout.name}" already exists. Overwrite?`,
+      primaryAction: { title: "Overwrite", style: Alert.ActionStyle.Destructive },
+      dismissAction: { title: "Cancel" },
+    });
+
+    if (!isConfirmed) return false;
+
     layouts[existing] = layout;
   } else {
     layouts.push(layout);
   }
+
   await LocalStorage.setItem(STORAGE_KEY, JSON.stringify(layouts));
+  return true;
 }
 
 export async function deleteSavedLayout(name: string): Promise<void> {

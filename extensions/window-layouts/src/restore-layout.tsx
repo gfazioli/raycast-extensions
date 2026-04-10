@@ -1,4 +1,16 @@
-import { Action, ActionPanel, closeMainWindow, Icon, List, showToast, Toast, WindowManagement } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Alert,
+  closeMainWindow,
+  confirmAlert,
+  Icon,
+  Keyboard,
+  List,
+  showToast,
+  Toast,
+  WindowManagement,
+} from "@raycast/api";
 import { useEffect, useState } from "react";
 import { getDesktopContext } from "./utils";
 import { deleteSavedLayout, getSavedLayouts, type SavedLayout } from "./utils/saved-layouts";
@@ -22,8 +34,6 @@ export default function Command() {
     const context = await getDesktopContext();
     if (!context) return;
 
-    // Track which windows have been matched so duplicates of the same app
-    // are assigned to separate saved positions
     const usedWindowIds = new Set<string>();
     let restored = 0;
 
@@ -57,6 +67,14 @@ export default function Command() {
   }
 
   async function handleDelete(layout: SavedLayout) {
+    const isConfirmed = await confirmAlert({
+      title: `Delete "${layout.name}"?`,
+      primaryAction: { title: "Delete", style: Alert.ActionStyle.Destructive },
+      dismissAction: { title: "Cancel" },
+    });
+
+    if (!isConfirmed) return;
+
     await deleteSavedLayout(layout.name);
     await loadLayouts();
     await showToast({ style: Toast.Style.Success, title: `Deleted "${layout.name}"` });
@@ -80,7 +98,7 @@ export default function Command() {
                   title="Delete Layout"
                   icon={Icon.Trash}
                   style={Action.Style.Destructive}
-                  shortcut={{ modifiers: ["cmd"], key: "d" }}
+                  shortcut={Keyboard.Shortcut.Common.Remove}
                   onAction={() => handleDelete(layout)}
                 />
               </ActionPanel>
