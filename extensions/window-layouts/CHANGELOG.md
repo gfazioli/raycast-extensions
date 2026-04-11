@@ -1,6 +1,6 @@
 # Window Layouts Changelog
 
-## [New Features & Improvements] - {PR_MERGE_DATE}
+## [New Features & Improvements] - 2026-04-11
 
 ### New Layouts
 - Added Horizontal 75/25 and 25/75 split layouts
