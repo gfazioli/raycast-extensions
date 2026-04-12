@@ -1,6 +1,6 @@
 # WP Bones Changelog
 
-## [New Features & Improvements] - {PR_MERGE_DATE}
+## [New Features & Improvements] - 2026-04-12
 
 ### New Commands
 - **Ask WP Bones AI** — Ask questions about WP Bones and get AI-powered answers based on the documentation (requires Raycast Pro)
