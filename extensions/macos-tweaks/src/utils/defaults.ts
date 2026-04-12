@@ -1,0 +1,213 @@
+import { execFileSync } from "child_process";
+import type { TweakDefinition, TweakState } from "../types";
+
+/**
+ * Read a value from macOS defaults.
+ * Returns undefined if the key doesn't exist (i.e., system default is in effect).
+ * Accepts expectedType to coerce correctly (avoids 0→false, 1→true confusion).
+ */
+export function readDefault(domain: string, key: string, expectedType?: string): unknown {
+  try {
+    const result = execFileSync("defaults", ["read", domain, key], {
+      encoding: "utf-8",
+      timeout: 5000,
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+
+    // Empty or multiline results (dicts/arrays) → treat as unreadable
+    if (result === "" || result.includes("\n")) return undefined;
+
+    // If we expect a number or enum with numeric values, parse as number first
+    if (expectedType === "number" || expectedType === "enum") {
+      const num = Number(result);
+      if (!isNaN(num)) return num;
+      // Could be a string enum value like "genie", "scale", etc.
+      return result;
+    }
+
+    // For booleans, handle the various representations macOS uses
+    if (expectedType === "boolean") {
+      if (result === "1" || result === "true" || result === "YES") return true;
+      if (result === "0" || result === "false" || result === "NO") return false;
+      return undefined;
+    }
+
+    // For strings, return as-is
+    return result;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Write a value to macOS defaults using execFileSync (no shell injection).
+ */
+export function writeDefault(domain: string, key: string, value: unknown): void {
+  let typeFlag: string;
+  let valueStr: string;
+
+  if (typeof value === "boolean") {
+    typeFlag = "-bool";
+    valueStr = value ? "true" : "false";
+  } else if (typeof value === "number") {
+    typeFlag = Number.isInteger(value) ? "-int" : "-float";
+    valueStr = String(value);
+  } else {
+    typeFlag = "-string";
+    valueStr = String(value);
+  }
+
+  execFileSync("defaults", ["write", domain, key, typeFlag, valueStr], {
+    timeout: 5000,
+  });
+}
+
+/**
+ * Delete a key from macOS defaults, reverting to system default.
+ */
+export function deleteDefault(domain: string, key: string): void {
+  try {
+    execFileSync("defaults", ["delete", domain, key], {
+      timeout: 5000,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+  } catch {
+    // Key didn't exist — already at default
+  }
+}
+
+/**
+ * Restart a process by name (e.g., "Finder", "Dock", "SystemUIServer").
+ */
+export function restartProcess(processName: string): void {
+  try {
+    execFileSync("killall", [processName], {
+      timeout: 5000,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+  } catch {
+    // Process might not be running
+  }
+}
+
+/**
+ * Compute the correct extra value based on the primary value direction.
+ * If the primary value matches the "enabled" direction, use the extra's value.
+ * Otherwise, invert it for booleans, or skip for non-booleans (reset handles cleanup).
+ */
+function computeExtraValue(extraValue: unknown, primaryValue: unknown, primaryDefault: unknown): unknown {
+  const isEnabling = primaryValue !== primaryDefault;
+  if (isEnabling) {
+    return extraValue;
+  }
+  // When disabling, invert booleans; for numbers/strings, write the inverse
+  if (typeof extraValue === "boolean") {
+    return !extraValue;
+  }
+  if (typeof extraValue === "number") {
+    // For numeric extras (like encoding 4 or duration 0), we can't guess the default.
+    // Safest: delete the key instead of writing a guessed value.
+    return undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Apply a tweak: write the value and any extra defaults, then restart if needed.
+ */
+export function applyTweak(tweak: TweakDefinition, value: unknown): void {
+  writeDefault(tweak.domain, tweak.key, value);
+
+  if (tweak.extraDefaults) {
+    for (const extra of tweak.extraDefaults) {
+      const extraVal = computeExtraValue(extra.value, value, tweak.defaultValue);
+      if (extraVal === undefined) {
+        deleteDefault(extra.domain, extra.key);
+      } else {
+        writeDefault(extra.domain, extra.key, extraVal);
+      }
+    }
+  }
+
+  if (tweak.requiresRestart) {
+    restartProcess(tweak.requiresRestart);
+  }
+}
+
+/**
+ * Reset a tweak to its default value by deleting the key(s).
+ */
+export function resetTweak(tweak: TweakDefinition): void {
+  deleteDefault(tweak.domain, tweak.key);
+
+  if (tweak.extraDefaults) {
+    for (const extra of tweak.extraDefaults) {
+      deleteDefault(extra.domain, extra.key);
+    }
+  }
+
+  if (tweak.requiresRestart) {
+    restartProcess(tweak.requiresRestart);
+  }
+}
+
+/**
+ * Determine if a value differs from the tweak's default.
+ * Normalizes both sides to avoid type mismatch (string "0.5" vs number 0.5).
+ */
+function isModified(currentValue: unknown, defaultValue: unknown): boolean {
+  if (currentValue === undefined) return false;
+  // Normalize: compare as strings to avoid cross-type issues
+  return String(currentValue) !== String(defaultValue);
+}
+
+/**
+ * Read the current state of a tweak definition.
+ */
+export function getTweakState(tweak: TweakDefinition): TweakState {
+  const currentValue = readDefault(tweak.domain, tweak.key, tweak.type);
+  return {
+    ...tweak,
+    currentValue: currentValue ?? tweak.defaultValue,
+    isModified: isModified(currentValue, tweak.defaultValue),
+  };
+}
+
+/**
+ * Get the `defaults write` command string for a tweak value (for clipboard copy).
+ */
+export function getCommandString(tweak: TweakDefinition, value: unknown): string {
+  const quotedDomain = quoteArg(tweak.domain);
+  const quotedKey = quoteArg(tweak.key);
+
+  let typeFlag: string;
+  let valueStr: string;
+
+  if (typeof value === "boolean") {
+    typeFlag = "-bool";
+    valueStr = value ? "true" : "false";
+  } else if (typeof value === "number") {
+    typeFlag = Number.isInteger(value) ? "-int" : "-float";
+    valueStr = String(value);
+  } else {
+    typeFlag = "-string";
+    valueStr = `"${String(value)}"`;
+  }
+
+  return `defaults write ${quotedDomain} ${quotedKey} ${typeFlag} ${valueStr}`;
+}
+
+/**
+ * Get the `defaults delete` command string (for clipboard copy).
+ */
+export function getResetCommandString(tweak: TweakDefinition): string {
+  return `defaults delete ${quoteArg(tweak.domain)} ${quoteArg(tweak.key)}`;
+}
+
+/**
+ * Quote a shell argument if it contains spaces or special characters.
+ */
+function quoteArg(arg: string): string {
+  if (/^[a-zA-Z0-9._/-]+$/.test(arg)) return arg;
+  return `"${arg.replace(/"/g, '\\"')}"`;
+}
