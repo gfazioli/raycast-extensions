@@ -14,7 +14,11 @@ export function cleanResult(result: ScanResult): number {
   try {
     if (result.cleanAction.type === "rmrf") {
       if (!existsSync(result.path)) return 0;
-      execFileSync("rm", ["-rf", result.path], {
+      // `--` end-of-options marker prevents paths starting with `-` from being
+      // treated as options (defense in depth, even though our paths are controlled).
+      // We delete the directory itself rather than trashing it: cache directories
+      // can be many GB and trashing them defeats the purpose (no immediate space freed).
+      execFileSync("rm", ["-rf", "--", result.path], {
         timeout: 60000,
         stdio: ["pipe", "pipe", "pipe"],
       });

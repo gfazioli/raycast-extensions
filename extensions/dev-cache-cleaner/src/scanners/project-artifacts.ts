@@ -57,7 +57,7 @@ const DEFAULT_SEARCH_PATHS = [
 ];
 
 export async function scanProjectArtifacts(): Promise<ScanResult[]> {
-  const prefs = getPreferenceValues<{ projectPaths?: string; minAgeDays?: string }>();
+  const prefs = getPreferenceValues<Preferences>();
   const minAgeDays = parseInt(prefs.minAgeDays ?? "30", 10) || 30;
   const minAgeSeconds = minAgeDays * 86400;
   const now = Math.floor(Date.now() / 1000);

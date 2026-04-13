@@ -19,6 +19,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
       available: isToolAvailable("npm"),
       cleanCommand: "npm cache clean --force",
       cleanAction: { type: "command", command: "npm", args: ["cache", "clean", "--force"] },
+      requiresTool: "npm",
       icon: "box",
     });
   }
@@ -116,6 +117,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
       available: isToolAvailable("pip3"),
       cleanCommand: "pip3 cache purge",
       cleanAction: { type: "command", command: "pip3", args: ["cache", "purge"] },
+      requiresTool: "pip3",
       icon: "box",
     });
   }

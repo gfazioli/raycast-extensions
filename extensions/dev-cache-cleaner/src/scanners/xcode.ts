@@ -19,7 +19,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
       itemCount: count,
       risk: "safe",
       available: true,
-      cleanCommand: "rm -rf ~/Library/Developer/Xcode/DerivedData/*",
+      cleanCommand: "rm -rf ~/Library/Developer/Xcode/DerivedData",
       cleanAction: { type: "rmrf" },
       icon: "app-window",
     });
@@ -38,7 +38,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
       size,
       risk: "moderate",
       available: true,
-      cleanCommand: "rm -rf ~/Library/Developer/Xcode/Archives/*",
+      cleanCommand: "rm -rf ~/Library/Developer/Xcode/Archives",
       cleanAction: { type: "rmrf" },
       icon: "app-window",
     });
@@ -59,7 +59,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
       itemCount: count,
       risk: "safe",
       available: true,
-      cleanCommand: "rm -rf ~/Library/Developer/Xcode/iOS\\ DeviceSupport/*",
+      cleanCommand: 'rm -rf "~/Library/Developer/Xcode/iOS DeviceSupport"',
       cleanAction: { type: "rmrf" },
       icon: "app-window",
     });

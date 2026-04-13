@@ -1,4 +1,4 @@
-import { readdirSync } from "fs";
+import { execFileSync } from "child_process";
 import { join } from "path";
 import type { ScanResult } from "../types";
 import { expandHome, formatBytes, getSize, isDirPresent } from "../utils/disk";
@@ -8,6 +8,9 @@ const MIN_REPORT_SIZE = 10 * 1024 * 1024;
 
 /** System cache prefixes to skip (Apple-managed, regenerate quickly) */
 const SKIP_PREFIXES = ["com.apple.", "CloudKit", "SiriTTS"];
+
+/** Cache subdirectories already handled by other scanners — skip to avoid duplicates */
+const SKIP_ENTRIES = new Set(["Yarn", "Homebrew", "CocoaPods", "pip", "composer"]);
 
 export async function scanSystem(): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
@@ -33,38 +36,61 @@ export async function scanSystem(): Promise<ScanResult[]> {
     }
   }
 
-  // Top user cache consumers (skip Apple system caches)
+  // Top-level user cache consumers — single du call for all at once
   const cachesPath = expandHome("~/Library/Caches");
   if (isDirPresent(cachesPath)) {
-    try {
-      const entries = readdirSync(cachesPath);
-      for (const entry of entries) {
-        if (SKIP_PREFIXES.some((prefix) => entry.startsWith(prefix))) continue;
+    const entries = listTopLevelCacheEntries(cachesPath);
+    for (const { name, size } of entries) {
+      if (SKIP_PREFIXES.some((prefix) => name.startsWith(prefix))) continue;
+      if (SKIP_ENTRIES.has(name)) continue;
+      if (size < MIN_REPORT_SIZE) continue;
 
-        const entryPath = join(cachesPath, entry);
-        const size = getSize(entryPath);
-        if (size < MIN_REPORT_SIZE) continue;
-
-        results.push({
-          id: `cache-${entry.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}`,
-          title: `${entry} Cache`,
-          description: `Application cache (${formatBytes(size)}). Generally safe to clean when the app is not running.`,
-          category: "system",
-          path: entryPath,
-          size,
-          risk: "moderate",
-          available: true,
-          cleanCommand: `rm -rf ~/Library/Caches/"${entry}"`,
-          cleanAction: { type: "rmrf" },
-          icon: "gear",
-        });
-      }
-    } catch {
-      // Can't read caches dir
+      const entryPath = join(cachesPath, name);
+      results.push({
+        id: `cache-${name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}`,
+        title: `${name} Cache`,
+        description: `Application cache (${formatBytes(size)}). Generally safe to clean when the app is not running.`,
+        category: "system",
+        path: entryPath,
+        size,
+        risk: "moderate",
+        available: true,
+        cleanCommand: `rm -rf ~/Library/Caches/"${name}"`,
+        cleanAction: { type: "rmrf" },
+        icon: "gear",
+      });
     }
   }
 
-  // Sort system results by size
   results.sort((a, b) => b.size - a.size);
   return results;
+}
+
+/**
+ * List all top-level entries in a cache directory with their sizes
+ * using a single `du -sk -d 1` call (much faster than N calls to getSize).
+ */
+function listTopLevelCacheEntries(cachesPath: string): { name: string; size: number }[] {
+  try {
+    const output = execFileSync("du", ["-sk", "-d", "1", cachesPath], {
+      encoding: "utf-8",
+      timeout: 60000,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    const entries: { name: string; size: number }[] = [];
+    for (const line of output.trim().split("\n")) {
+      const parts = line.split("\t");
+      if (parts.length !== 2) continue;
+      const kb = parseInt(parts[0], 10);
+      const path = parts[1];
+      if (isNaN(kb) || path === cachesPath) continue;
+      const name = path.substring(cachesPath.length + 1);
+      if (!name || name.includes("/")) continue;
+      entries.push({ name, size: kb * 1024 });
+    }
+    return entries;
+  } catch {
+    return [];
+  }
 }

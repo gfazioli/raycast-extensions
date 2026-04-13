@@ -149,11 +149,21 @@ function ResultItem({
                   if (!confirmed) return;
                 }
                 const freed = cleanResult(result);
-                await showToast({
-                  style: Toast.Style.Success,
-                  title: `Cleaned ${result.title}`,
-                  message: `Freed ${formatBytes(freed)}`,
-                });
+                if (freed > 0) {
+                  await showToast({
+                    style: Toast.Style.Success,
+                    title: `Cleaned ${result.title}`,
+                    message: `Freed ${formatBytes(freed)}`,
+                  });
+                } else {
+                  await showToast({
+                    style: Toast.Style.Failure,
+                    title: `Could not clean ${result.title}`,
+                    message: result.requiresTool
+                      ? `Requires ${result.requiresTool}`
+                      : "Command failed or nothing to clean",
+                  });
+                }
                 onUpdate();
               }}
             />
@@ -162,7 +172,7 @@ function ResultItem({
               icon={Icon.Trash}
               shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
               onAction={async () => {
-                const safeResults = allResults.filter((r) => r.risk === "safe" && r.size > 0);
+                const safeResults = allResults.filter((r) => r.risk === "safe" && r.available && r.size > 0);
                 const safeTotal = safeResults.reduce((sum, r) => sum + r.size, 0);
                 const confirmed = await confirmAlert({
                   title: `Clean ${safeResults.length} Safe Items?`,
@@ -190,12 +200,14 @@ function ResultItem({
                 await showToast({ title: "Copied", message: result.cleanCommand });
               }}
             />
-            <Action
-              title="Open in Finder"
-              icon={Icon.Finder}
-              shortcut={{ modifiers: ["cmd"], key: "o" }}
-              onAction={() => open(result.path)}
-            />
+            {result.path.startsWith("/") || result.path.startsWith("~") ? (
+              <Action
+                title="Open in Finder"
+                icon={Icon.Finder}
+                shortcut={{ modifiers: ["cmd"], key: "o" }}
+                onAction={() => open(result.path)}
+              />
+            ) : null}
             <Action
               title="Rescan"
               icon={Icon.ArrowClockwise}

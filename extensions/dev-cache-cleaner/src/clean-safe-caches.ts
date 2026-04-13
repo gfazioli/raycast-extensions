@@ -11,7 +11,7 @@ export default async function CleanSafeCaches() {
       toast.message = step;
     });
 
-    const safeResults = results.filter((r) => r.risk === "safe" && r.size > 0);
+    const safeResults = results.filter((r) => r.risk === "safe" && r.available && r.size > 0);
     if (safeResults.length === 0) {
       await showHUD("No safe caches to clean");
       return;

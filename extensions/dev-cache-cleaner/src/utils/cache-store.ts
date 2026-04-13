@@ -22,7 +22,9 @@ export async function setCachedResults(results: ScanResult[]): Promise<void> {
 export async function getCacheAge(): Promise<string> {
   const ts = await LocalStorage.getItem<string>(CACHE_TIMESTAMP_KEY);
   if (!ts) return "never";
-  const minutes = Math.floor((Date.now() - parseInt(ts, 10)) / 60000);
+  const parsed = parseInt(ts, 10);
+  if (Number.isNaN(parsed)) return "never";
+  const minutes = Math.floor((Date.now() - parsed) / 60000);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
