@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { scanSparkleUpdates } from "./utils/sparkle-scanner";
 import { scanCaskUpdates } from "./utils/cask-scanner";
 import { scanMasUpdates } from "./utils/mas-scanner";
-import { getStoredUpdates, storeUpdates } from "./utils/update-store";
+import { getStoredUpdatesSync, storeUpdates } from "./utils/update-store";
 import { getToolStatus } from "./utils/tool-status";
 import type { AppUpdate, ToolStatus, UpdateSource } from "./utils/types";
 
@@ -23,9 +23,11 @@ const SOURCE_ICONS: Record<UpdateSource, Icon> = {
 };
 
 export default function Command() {
-  const [updates, setUpdates] = useState<AppUpdate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [tools, setTools] = useState<ToolStatus>({ brew: true, mas: true });
+  // Initialize synchronously from Cache so the first render has real data
+  // (prevents the "..." → "5" flicker that occurs when reading async).
+  const [updates, setUpdates] = useState<AppUpdate[]>(() => getStoredUpdatesSync());
+  const [isLoading, setIsLoading] = useState(() => getStoredUpdatesSync().length === 0);
+  const [tools, setTools] = useState<ToolStatus>(() => getToolStatus());
 
   async function scan() {
     try {
@@ -50,12 +52,12 @@ export default function Command() {
   }
 
   useEffect(() => {
-    getStoredUpdates().then((cached) => {
-      if (cached.length > 0) {
-        setUpdates(cached);
-      }
-      scan();
-    });
+    // If we already have data from Cache (sync init), do nothing.
+    // The interval in package.json handles periodic refresh — clicking the
+    // menu bar must NOT trigger a scan (prevents visible flicker).
+    if (updates.length > 0) return;
+    // First run (no cache) — scan now.
+    scan();
   }, []);
 
   const count = updates.length;
