@@ -1,5 +1,5 @@
 import { execFileSync } from "child_process";
-import type { TweakDefinition, TweakState } from "../types";
+import type { TweakDefinition, TweakState, TweakValue } from "../types";
 
 /**
  * Read a value from macOS defaults.
@@ -42,7 +42,7 @@ export function readDefault(domain: string, key: string, expectedType?: string):
 /**
  * Write a value to macOS defaults using execFileSync (no shell injection).
  */
-export function writeDefault(domain: string, key: string, value: unknown): void {
+export function writeDefault(domain: string, key: string, value: TweakValue): void {
   let typeFlag: string;
   let valueStr: string;
 
@@ -95,19 +95,20 @@ export function restartProcess(processName: string): void {
  * If the primary value matches the "enabled" direction, use the extra's value.
  * Otherwise, invert it for booleans, or skip for non-booleans (reset handles cleanup).
  */
-function computeExtraValue(extraValue: unknown, primaryValue: unknown, primaryDefault: unknown): unknown {
+function computeExtraValue(
+  extraValue: TweakValue,
+  primaryValue: TweakValue,
+  primaryDefault: TweakValue,
+): TweakValue | undefined {
   const isEnabling = primaryValue !== primaryDefault;
   if (isEnabling) {
     return extraValue;
   }
-  // When disabling, invert booleans; for numbers/strings, write the inverse
+  // When disabling, invert booleans. For non-boolean extras (numbers/strings)
+  // we can't guess the system default, so we signal the caller to delete the key
+  // (which reverts to the macOS default) by returning undefined.
   if (typeof extraValue === "boolean") {
     return !extraValue;
-  }
-  if (typeof extraValue === "number") {
-    // For numeric extras (like encoding 4 or duration 0), we can't guess the default.
-    // Safest: delete the key instead of writing a guessed value.
-    return undefined;
   }
   return undefined;
 }
@@ -115,11 +116,16 @@ function computeExtraValue(extraValue: unknown, primaryValue: unknown, primaryDe
 /**
  * Apply a tweak: write the value and any extra defaults, then restart if needed.
  */
-export function applyTweak(tweak: TweakDefinition, value: unknown): void {
+export function applyTweak(tweak: TweakDefinition, value: TweakValue): void {
   writeDefault(tweak.domain, tweak.key, value);
 
   if (tweak.extraDefaults) {
     for (const extra of tweak.extraDefaults) {
+      if (extra.mirrorPrimary) {
+        // Mirror the primary value (used when both keys must stay in sync)
+        writeDefault(extra.domain, extra.key, value);
+        continue;
+      }
       const extraVal = computeExtraValue(extra.value, value, tweak.defaultValue);
       if (extraVal === undefined) {
         deleteDefault(extra.domain, extra.key);
@@ -166,9 +172,10 @@ function isModified(currentValue: unknown, defaultValue: unknown): boolean {
  */
 export function getTweakState(tweak: TweakDefinition): TweakState {
   const currentValue = readDefault(tweak.domain, tweak.key, tweak.type);
+  const resolvedValue = (currentValue ?? tweak.defaultValue) as TweakValue;
   return {
     ...tweak,
-    currentValue: currentValue ?? tweak.defaultValue,
+    currentValue: resolvedValue,
     isModified: isModified(currentValue, tweak.defaultValue),
   };
 }
@@ -176,7 +183,7 @@ export function getTweakState(tweak: TweakDefinition): TweakState {
 /**
  * Get the `defaults write` command string for a tweak value (for clipboard copy).
  */
-export function getCommandString(tweak: TweakDefinition, value: unknown): string {
+export function getCommandString(tweak: TweakDefinition, value: TweakValue): string {
   const quotedDomain = quoteArg(tweak.domain);
   const quotedKey = quoteArg(tweak.key);
 
@@ -191,7 +198,7 @@ export function getCommandString(tweak: TweakDefinition, value: unknown): string
     valueStr = String(value);
   } else {
     typeFlag = "-string";
-    valueStr = `"${String(value)}"`;
+    valueStr = quoteArg(String(value));
   }
 
   return `defaults write ${quotedDomain} ${quotedKey} ${typeFlag} ${valueStr}`;

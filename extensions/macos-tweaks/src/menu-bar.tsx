@@ -44,13 +44,17 @@ export default function TweaksMenuBar() {
                 subtitle={formatValue(tweak)}
                 icon={Icon.Circle}
                 onAction={async () => {
-                  if (tweak.type === "boolean") {
-                    const newValue = !tweak.currentValue;
-                    applyTweak(tweak, newValue);
-                    await showHUD(`${tweak.title}: ${newValue ? "On" : "Off"}`);
-                  } else {
-                    resetTweak(tweak);
-                    await showHUD(`${tweak.title}: Reset to default`);
+                  try {
+                    if (tweak.type === "boolean") {
+                      const newValue = !(tweak.currentValue === true);
+                      applyTweak(tweak, newValue);
+                      await showHUD(`${tweak.title}: ${newValue ? "On" : "Off"}`);
+                    } else {
+                      resetTweak(tweak);
+                      await showHUD(`${tweak.title}: Reset to default`);
+                    }
+                  } catch (error) {
+                    await showHUD(`Failed: ${error instanceof Error ? error.message : "Unknown error"}`);
                   }
                 }}
               />

@@ -80,7 +80,7 @@ export default function MyTweaks() {
                     <Action
                       title="Copy Defaults Command"
                       icon={Icon.Clipboard}
-                      shortcut={{ modifiers: ["cmd"], key: "c" }}
+                      shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
                       onAction={async () => {
                         const cmd = getCommandString(tweak, tweak.currentValue);
                         await Clipboard.copy(cmd);

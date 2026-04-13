@@ -15,6 +15,8 @@ export type TweakCategory =
 
 export type TweakType = "boolean" | "string" | "number" | "enum";
 
+export type TweakValue = boolean | string | number;
+
 export type EnumOption = {
   title: string;
   value: string | number;
@@ -30,7 +32,7 @@ export interface TweakDefinition {
   domain: string;
   key: string;
   type: TweakType;
-  defaultValue: unknown;
+  defaultValue: TweakValue;
   options?: EnumOption[];
   min?: number;
   max?: number;
@@ -38,12 +40,21 @@ export interface TweakDefinition {
   minMacOS?: string;
   risk: TweakRisk;
   tags: string[];
-  /** Some tweaks need multiple commands — extra domain/key pairs to also set */
-  extraDefaults?: { domain: string; key: string; value: unknown }[];
+  /**
+   * Some tweaks need multiple commands — extra domain/key pairs to also set.
+   * If `mirrorPrimary: true`, the extra key uses the primary tweak value instead
+   * of a fixed value (useful when two keys must stay in sync, e.g. TextEdit encoding).
+   */
+  extraDefaults?: {
+    domain: string;
+    key: string;
+    value: TweakValue;
+    mirrorPrimary?: boolean;
+  }[];
 }
 
 export interface TweakState extends TweakDefinition {
-  currentValue: unknown;
+  currentValue: TweakValue;
   isModified: boolean;
 }
 

@@ -111,7 +111,7 @@ function TweakItem({ tweak, onUpdate }: { tweak: TweakState; onUpdate: () => voi
             <Action
               title="Copy Defaults Command"
               icon={Icon.Clipboard}
-              shortcut={{ modifiers: ["cmd"], key: "c" }}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
               onAction={async () => {
                 const cmd = getCommandString(tweak, tweak.currentValue);
                 await Clipboard.copy(cmd);
@@ -121,7 +121,7 @@ function TweakItem({ tweak, onUpdate }: { tweak: TweakState; onUpdate: () => voi
             <Action
               title="Copy Reset Command"
               icon={Icon.Clipboard}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+              shortcut={{ modifiers: ["cmd", "opt"], key: "c" }}
               onAction={async () => {
                 const cmd = getResetCommandString(tweak);
                 await Clipboard.copy(cmd);
@@ -136,7 +136,8 @@ function TweakItem({ tweak, onUpdate }: { tweak: TweakState; onUpdate: () => voi
 }
 
 function ToggleAction({ tweak, onUpdate }: { tweak: TweakState; onUpdate: () => void }) {
-  const newValue = !tweak.currentValue;
+  const currentBool = tweak.currentValue === true;
+  const newValue = !currentBool;
   const label = newValue ? "Enable" : "Disable";
 
   return (
