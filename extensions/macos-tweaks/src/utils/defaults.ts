@@ -1,10 +1,48 @@
-import { execFileSync } from "child_process";
+import { execFile, execFileSync } from "child_process";
+import { promisify } from "util";
 import type { TweakDefinition, TweakState, TweakValue } from "../types";
 
+const execFileAsync = promisify(execFile);
+
+function coerceDefault(result: string, expectedType?: string): unknown {
+  // Empty or multiline results (dicts/arrays) → treat as unreadable
+  if (result === "" || result.includes("\n")) return undefined;
+
+  // If we expect a number or enum with numeric values, parse as number first
+  if (expectedType === "number" || expectedType === "enum") {
+    const num = Number(result);
+    if (!isNaN(num)) return num;
+    // Could be a string enum value like "genie", "scale", etc.
+    return result;
+  }
+
+  // For booleans, handle the various representations macOS uses
+  if (expectedType === "boolean") {
+    if (result === "1" || result === "true" || result === "YES") return true;
+    if (result === "0" || result === "false" || result === "NO") return false;
+    return undefined;
+  }
+
+  return result;
+}
+
 /**
- * Read a value from macOS defaults.
- * Returns undefined if the key doesn't exist (i.e., system default is in effect).
- * Accepts expectedType to coerce correctly (avoids 0→false, 1→true confusion).
+ * Async read — preferred for batch reads (avoids blocking the Raycast UI).
+ */
+export async function readDefaultAsync(domain: string, key: string, expectedType?: string): Promise<unknown> {
+  try {
+    const { stdout } = await execFileAsync("defaults", ["read", domain, key], {
+      encoding: "utf-8",
+      timeout: 5000,
+    });
+    return coerceDefault(stdout.trim(), expectedType);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Sync read — kept for backward compatibility. Prefer readDefaultAsync in loops.
  */
 export function readDefault(domain: string, key: string, expectedType?: string): unknown {
   try {
@@ -13,27 +51,7 @@ export function readDefault(domain: string, key: string, expectedType?: string):
       timeout: 5000,
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
-
-    // Empty or multiline results (dicts/arrays) → treat as unreadable
-    if (result === "" || result.includes("\n")) return undefined;
-
-    // If we expect a number or enum with numeric values, parse as number first
-    if (expectedType === "number" || expectedType === "enum") {
-      const num = Number(result);
-      if (!isNaN(num)) return num;
-      // Could be a string enum value like "genie", "scale", etc.
-      return result;
-    }
-
-    // For booleans, handle the various representations macOS uses
-    if (expectedType === "boolean") {
-      if (result === "1" || result === "true" || result === "YES") return true;
-      if (result === "0" || result === "false" || result === "NO") return false;
-      return undefined;
-    }
-
-    // For strings, return as-is
-    return result;
+    return coerceDefault(result, expectedType);
   } catch {
     return undefined;
   }
@@ -168,7 +186,7 @@ function isModified(currentValue: unknown, defaultValue: unknown): boolean {
 }
 
 /**
- * Read the current state of a tweak definition.
+ * Read the current state of a tweak definition (sync version).
  */
 export function getTweakState(tweak: TweakDefinition): TweakState {
   const currentValue = readDefault(tweak.domain, tweak.key, tweak.type);
@@ -178,6 +196,27 @@ export function getTweakState(tweak: TweakDefinition): TweakState {
     currentValue: resolvedValue,
     isModified: isModified(currentValue, tweak.defaultValue),
   };
+}
+
+/**
+ * Read the current state of a tweak definition (async).
+ * Use this in loops to avoid blocking the Raycast UI.
+ */
+export async function getTweakStateAsync(tweak: TweakDefinition): Promise<TweakState> {
+  const currentValue = await readDefaultAsync(tweak.domain, tweak.key, tweak.type);
+  const resolvedValue = (currentValue ?? tweak.defaultValue) as TweakValue;
+  return {
+    ...tweak,
+    currentValue: resolvedValue,
+    isModified: isModified(currentValue, tweak.defaultValue),
+  };
+}
+
+/**
+ * Load all tweak states in parallel. Much faster than sequential sync reads.
+ */
+export async function getAllTweakStates(tweaks: readonly TweakDefinition[]): Promise<TweakState[]> {
+  return Promise.all(tweaks.map((t) => getTweakStateAsync(t)));
 }
 
 /**

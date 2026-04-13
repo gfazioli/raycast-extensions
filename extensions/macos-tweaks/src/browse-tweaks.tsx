@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ALL_TWEAKS } from "./tweaks";
 import { CATEGORY_META } from "./types";
 import type { TweakCategory, TweakState } from "./types";
-import { applyTweak, getCommandString, getResetCommandString, getTweakState, resetTweak } from "./utils/defaults";
+import { applyTweak, getAllTweakStates, getCommandString, getResetCommandString, resetTweak } from "./utils/defaults";
 import { formatValue, buildDetailMarkdown } from "./utils/format";
 
 type FilterMode = "all" | "modified" | "default";
@@ -14,9 +14,9 @@ export default function BrowseTweaks() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<FilterMode>("all");
 
-  const loadTweaks = useCallback(() => {
+  const loadTweaks = useCallback(async () => {
     setIsLoading(true);
-    const states = ALL_TWEAKS.map(getTweakState);
+    const states = await getAllTweakStates(ALL_TWEAKS);
     setTweakStates(states);
     setIsLoading(false);
   }, []);

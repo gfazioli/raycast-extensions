@@ -3,16 +3,16 @@ import { useState, useEffect, useCallback } from "react";
 import { ALL_TWEAKS } from "./tweaks";
 import { CATEGORY_META } from "./types";
 import type { TweakCategory, TweakState } from "./types";
-import { getCommandString, getTweakState, resetTweak } from "./utils/defaults";
+import { getAllTweakStates, getCommandString, resetTweak } from "./utils/defaults";
 import { formatValue, buildDetailMarkdown } from "./utils/format";
 
 export default function MyTweaks() {
   const [tweakStates, setTweakStates] = useState<TweakState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadTweaks = useCallback(() => {
+  const loadTweaks = useCallback(async () => {
     setIsLoading(true);
-    const states = ALL_TWEAKS.map(getTweakState).filter((t) => t.isModified);
+    const states = (await getAllTweakStates(ALL_TWEAKS)).filter((t) => t.isModified);
     setTweakStates(states);
     setIsLoading(false);
   }, []);

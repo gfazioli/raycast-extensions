@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ALL_TWEAKS } from "./tweaks";
 import { CATEGORY_META } from "./types";
 import type { TweakCategory, TweakState } from "./types";
-import { applyTweak, getTweakState, resetTweak } from "./utils/defaults";
+import { applyTweak, getAllTweakStates, resetTweak } from "./utils/defaults";
 import { formatValue } from "./utils/format";
 
 export default function TweaksMenuBar() {
@@ -11,9 +11,11 @@ export default function TweaksMenuBar() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const states = ALL_TWEAKS.map(getTweakState);
-    setModified(states.filter((t) => t.isModified));
-    setIsLoading(false);
+    (async () => {
+      const states = await getAllTweakStates(ALL_TWEAKS);
+      setModified(states.filter((t) => t.isModified));
+      setIsLoading(false);
+    })();
   }, []);
 
   const grouped = new Map<TweakCategory, TweakState[]>();
