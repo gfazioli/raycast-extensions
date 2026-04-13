@@ -1,5 +1,5 @@
 import { Icon, MenuBarExtra, open, showHUD } from "@raycast/api";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ALL_TWEAKS } from "./tweaks";
 import { CATEGORY_META } from "./types";
 import type { TweakCategory, TweakState } from "./types";
@@ -10,13 +10,15 @@ export default function TweaksMenuBar() {
   const [modified, setModified] = useState<TweakState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const states = await getAllTweakStates(ALL_TWEAKS);
-      setModified(states.filter((t) => t.isModified));
-      setIsLoading(false);
-    })();
+  const reload = useCallback(async () => {
+    const states = await getAllTweakStates(ALL_TWEAKS);
+    setModified(states.filter((t) => t.isModified));
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   const grouped = new Map<TweakCategory, TweakState[]>();
   for (const t of modified) {
@@ -55,6 +57,7 @@ export default function TweaksMenuBar() {
                       resetTweak(tweak);
                       await showHUD(`${tweak.title}: Reset to default`);
                     }
+                    await reload();
                   } catch (error) {
                     await showHUD(`Failed: ${error instanceof Error ? error.message : "Unknown error"}`);
                   }

@@ -47,7 +47,7 @@ export const animationsTweaks: TweakDefinition[] = [
       { title: "Fast (0.2s)", value: 0.2 },
       { title: "Default (0.5s)", value: 0.5 },
     ],
-    extraDefaults: [{ domain: "com.apple.dock", key: "springboard-hide-duration", value: 0 }],
+    extraDefaults: [{ domain: "com.apple.dock", key: "springboard-hide-duration", value: 0, mirrorPrimary: true }],
     requiresRestart: "Dock",
     risk: "safe",
     tags: ["launchpad"],

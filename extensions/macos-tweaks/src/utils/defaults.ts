@@ -1,10 +1,10 @@
 import { execFile, execFileSync } from "child_process";
 import { promisify } from "util";
-import type { TweakDefinition, TweakState, TweakValue } from "../types";
+import type { TweakDefinition, TweakState, TweakType, TweakValue } from "../types";
 
 const execFileAsync = promisify(execFile);
 
-function coerceDefault(result: string, expectedType?: string): unknown {
+function coerceDefault(result: string, expectedType?: TweakType): TweakValue | undefined {
   // Empty or multiline results (dicts/arrays) → treat as unreadable
   if (result === "" || result.includes("\n")) return undefined;
 
@@ -27,31 +27,19 @@ function coerceDefault(result: string, expectedType?: string): unknown {
 }
 
 /**
- * Async read — preferred for batch reads (avoids blocking the Raycast UI).
+ * Async read — used for batch reads (avoids blocking the Raycast UI).
  */
-export async function readDefaultAsync(domain: string, key: string, expectedType?: string): Promise<unknown> {
+export async function readDefaultAsync(
+  domain: string,
+  key: string,
+  expectedType?: TweakType,
+): Promise<TweakValue | undefined> {
   try {
     const { stdout } = await execFileAsync("defaults", ["read", domain, key], {
       encoding: "utf-8",
       timeout: 5000,
     });
     return coerceDefault(stdout.trim(), expectedType);
-  } catch {
-    return undefined;
-  }
-}
-
-/**
- * Sync read — kept for backward compatibility. Prefer readDefaultAsync in loops.
- */
-export function readDefault(domain: string, key: string, expectedType?: string): unknown {
-  try {
-    const result = execFileSync("defaults", ["read", domain, key], {
-      encoding: "utf-8",
-      timeout: 5000,
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
-    return coerceDefault(result, expectedType);
   } catch {
     return undefined;
   }
@@ -110,15 +98,17 @@ export function restartProcess(processName: string): void {
 
 /**
  * Compute the correct extra value based on the primary value direction.
- * If the primary value matches the "enabled" direction, use the extra's value.
- * Otherwise, invert it for booleans, or skip for non-booleans (reset handles cleanup).
+ * When the primary is at its default, extras are deleted (reverts to macOS defaults).
+ * When the primary is "enabled", extras use their configured value.
+ * When toggled off, boolean extras are inverted; other types are deleted.
  */
 function computeExtraValue(
   extraValue: TweakValue,
   primaryValue: TweakValue,
   primaryDefault: TweakValue,
 ): TweakValue | undefined {
-  const isEnabling = primaryValue !== primaryDefault;
+  // Normalize comparison (matches isModified logic) — avoids string/number mismatch edge cases
+  const isEnabling = String(primaryValue) !== String(primaryDefault);
   if (isEnabling) {
     return extraValue;
   }
@@ -179,35 +169,20 @@ export function resetTweak(tweak: TweakDefinition): void {
  * Determine if a value differs from the tweak's default.
  * Normalizes both sides to avoid type mismatch (string "0.5" vs number 0.5).
  */
-function isModified(currentValue: unknown, defaultValue: unknown): boolean {
+function isModified(currentValue: TweakValue | undefined, defaultValue: TweakValue): boolean {
   if (currentValue === undefined) return false;
-  // Normalize: compare as strings to avoid cross-type issues
   return String(currentValue) !== String(defaultValue);
 }
 
 /**
- * Read the current state of a tweak definition (sync version).
- */
-export function getTweakState(tweak: TweakDefinition): TweakState {
-  const currentValue = readDefault(tweak.domain, tweak.key, tweak.type);
-  const resolvedValue = (currentValue ?? tweak.defaultValue) as TweakValue;
-  return {
-    ...tweak,
-    currentValue: resolvedValue,
-    isModified: isModified(currentValue, tweak.defaultValue),
-  };
-}
-
-/**
- * Read the current state of a tweak definition (async).
- * Use this in loops to avoid blocking the Raycast UI.
+ * Read the current state of a single tweak definition.
+ * Use getAllTweakStates() for batch reads.
  */
 export async function getTweakStateAsync(tweak: TweakDefinition): Promise<TweakState> {
   const currentValue = await readDefaultAsync(tweak.domain, tweak.key, tweak.type);
-  const resolvedValue = (currentValue ?? tweak.defaultValue) as TweakValue;
   return {
     ...tweak,
-    currentValue: resolvedValue,
+    currentValue: currentValue ?? tweak.defaultValue,
     isModified: isModified(currentValue, tweak.defaultValue),
   };
 }
@@ -252,8 +227,10 @@ export function getResetCommandString(tweak: TweakDefinition): string {
 
 /**
  * Quote a shell argument if it contains spaces or special characters.
+ * Used only for clipboard-copy commands, not for actual execution.
  */
 function quoteArg(arg: string): string {
   if (/^[a-zA-Z0-9._/-]+$/.test(arg)) return arg;
-  return `"${arg.replace(/"/g, '\\"')}"`;
+  // Single-quote wrap: robust against $, backticks, backslashes.
+  return `'${arg.replace(/'/g, "'\\''")}'`;
 }
