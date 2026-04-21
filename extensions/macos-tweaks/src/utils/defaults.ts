@@ -188,10 +188,19 @@ export async function getTweakStateAsync(tweak: TweakDefinition): Promise<TweakS
 }
 
 /**
- * Load all tweak states in parallel. Much faster than sequential sync reads.
+ * Load all tweak states in chunks to avoid spawning too many subprocesses at once.
+ * With ~72 tweaks a single Promise.all is fast on modern Macs, but chunking keeps
+ * the process table small on constrained machines.
  */
+const CHUNK_SIZE = 20;
+
 export async function getAllTweakStates(tweaks: readonly TweakDefinition[]): Promise<TweakState[]> {
-  return Promise.all(tweaks.map((t) => getTweakStateAsync(t)));
+  const results: TweakState[] = [];
+  for (let i = 0; i < tweaks.length; i += CHUNK_SIZE) {
+    const chunk = tweaks.slice(i, i + CHUNK_SIZE);
+    results.push(...(await Promise.all(chunk.map((t) => getTweakStateAsync(t)))));
+  }
+  return results;
 }
 
 /**

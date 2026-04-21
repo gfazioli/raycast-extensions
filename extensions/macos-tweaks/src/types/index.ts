@@ -42,16 +42,20 @@ export interface TweakDefinition {
   tags: string[];
   /**
    * Some tweaks need multiple commands — extra domain/key pairs to also set.
-   * If `mirrorPrimary: true`, the extra key uses the primary tweak value instead
-   * of a fixed value (useful when two keys must stay in sync, e.g. TextEdit encoding).
+   *
+   * Two variants:
+   * - `{ domain, key, value }` — writes a fixed value when the primary is enabled,
+   *   inverts booleans (or deletes non-booleans) when the primary reverts to default.
+   * - `{ domain, key, mirrorPrimary: true }` — writes the same value as the primary
+   *   tweak. Useful when two keys must stay in sync (e.g. TextEdit encoding keys).
+   *   The primary and extra keys must accept compatible types.
    */
-  extraDefaults?: {
-    domain: string;
-    key: string;
-    value: TweakValue;
-    mirrorPrimary?: boolean;
-  }[];
+  extraDefaults?: ExtraDefault[];
 }
+
+export type ExtraDefault =
+  | { domain: string; key: string; value: TweakValue; mirrorPrimary?: false }
+  | { domain: string; key: string; mirrorPrimary: true };
 
 export interface TweakState extends TweakDefinition {
   currentValue: TweakValue;

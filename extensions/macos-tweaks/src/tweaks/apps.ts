@@ -28,7 +28,7 @@ export const appsTweaks: TweakDefinition[] = [
       { title: "UTF-8", value: 4 },
       { title: "Western (Mac OS Roman)", value: 30 },
     ],
-    extraDefaults: [{ domain: "com.apple.TextEdit", key: "PlainTextEncodingForWrite", value: 0, mirrorPrimary: true }],
+    extraDefaults: [{ domain: "com.apple.TextEdit", key: "PlainTextEncodingForWrite", mirrorPrimary: true }],
     requiresRestart: "TextEdit",
     risk: "safe",
     tags: ["textedit", "encoding", "utf8"],
