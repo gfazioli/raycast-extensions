@@ -1,17 +1,28 @@
 import { LocalStorage } from "@raycast/api";
+import { existsSync } from "fs";
 
 const PINNED_KEY = "pinned-folders";
 const RECENT_KEY = "recent-folders";
 const MAX_RECENT = 20;
 
-export async function getPinnedFolders(): Promise<string[]> {
-  const raw = await LocalStorage.getItem<string>(PINNED_KEY);
+async function loadPrunedList(key: string): Promise<string[]> {
+  const raw = await LocalStorage.getItem<string>(key);
   if (!raw) return [];
+  let parsed: string[];
   try {
-    return JSON.parse(raw) as string[];
+    parsed = JSON.parse(raw) as string[];
   } catch {
     return [];
   }
+  const existing = parsed.filter((path) => existsSync(path));
+  if (existing.length !== parsed.length) {
+    await LocalStorage.setItem(key, JSON.stringify(existing));
+  }
+  return existing;
+}
+
+export async function getPinnedFolders(): Promise<string[]> {
+  return loadPrunedList(PINNED_KEY);
 }
 
 export async function togglePin(path: string): Promise<boolean> {
@@ -29,13 +40,7 @@ export async function togglePin(path: string): Promise<boolean> {
 }
 
 export async function getRecentFolders(): Promise<string[]> {
-  const raw = await LocalStorage.getItem<string>(RECENT_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as string[];
-  } catch {
-    return [];
-  }
+  return loadPrunedList(RECENT_KEY);
 }
 
 export async function addRecentFolder(path: string): Promise<void> {

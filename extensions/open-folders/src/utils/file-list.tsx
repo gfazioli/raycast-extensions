@@ -9,6 +9,8 @@ type FileListProps = {
   layout: string;
   showPins?: boolean;
   navigable?: boolean;
+  isLoading?: boolean;
+  navigationTitle?: string;
 };
 
 function formatSize(bytes: number): string {
@@ -17,6 +19,34 @@ function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function SubfolderView({ entry, navigable, showPins }: { entry: FileEntry; navigable?: boolean; showPins?: boolean }) {
+  const [entries, setEntries] = useState<FileEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const { entries: children, error } = readFolders(entry.fullPath);
+      if (error) {
+        showToast({ style: Toast.Style.Failure, title: "Cannot read directory", message: error });
+      }
+      setEntries(children);
+      setIsLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [entry.fullPath]);
+
+  return (
+    <FileList
+      items={entries}
+      layout="List"
+      showPins={showPins}
+      navigable={navigable}
+      isLoading={isLoading}
+      navigationTitle={entry.name}
+    />
+  );
 }
 
 function FileActions({
@@ -53,19 +83,7 @@ function FileActions({
           icon={Icon.ArrowRight}
           shortcut={{ modifiers: ["cmd"], key: "arrowRight" }}
           onAction={() => {
-            const { entries: children } = readFolders(entry.fullPath);
-            push(
-              <List navigationTitle={entry.name}>
-                {children.map((child) => (
-                  <List.Item
-                    key={child.fullPath}
-                    icon={{ fileIcon: child.fullPath }}
-                    title={child.name}
-                    actions={<FileActions entry={child} navigable={navigable} />}
-                  />
-                ))}
-              </List>,
-            );
+            push(<SubfolderView entry={entry} navigable={navigable} showPins={showPins} />);
           }}
         />
       )}
@@ -94,7 +112,7 @@ function FileActions({
   );
 }
 
-export function FileList({ items, layout, showPins, navigable }: FileListProps) {
+export function FileList({ items, layout, showPins, navigable, isLoading, navigationTitle }: FileListProps) {
   const [pinnedPaths, setPinnedPaths] = useState<string[]>([]);
 
   useEffect(() => {
@@ -113,7 +131,7 @@ export function FileList({ items, layout, showPins, navigable }: FileListProps) 
 
   if (layout === "List") {
     return (
-      <List>
+      <List isLoading={isLoading} navigationTitle={navigationTitle}>
         {pinned.length > 0 && (
           <List.Section title="Pinned">
             {pinned.map((entry) => (
@@ -147,7 +165,13 @@ export function FileList({ items, layout, showPins, navigable }: FileListProps) 
   }
 
   return (
-    <Grid columns={Number.parseInt(layout, 10)} inset={Grid.Inset.Small} aspectRatio="4/3">
+    <Grid
+      columns={Number.parseInt(layout, 10)}
+      inset={Grid.Inset.Small}
+      aspectRatio="4/3"
+      isLoading={isLoading}
+      navigationTitle={navigationTitle}
+    >
       {pinned.length > 0 && (
         <Grid.Section title="Pinned">
           {pinned.map((entry) => (

@@ -28,6 +28,10 @@
 - Replaced loose equality (`!=`) with strict equality
 - Removed unused `decs.d.ts` file
 - Fixed inconsistent indentation in package.json
+- Subfolder navigation now reads asynchronously with a loading state, so it no longer freezes Raycast on folders with thousands of entries
+- Subfolder drill-down preserves the pin context, so folders can be pinned at any depth
+- Pinned and Recent Folders lists auto-prune entries whose paths no longer exist on disk
+- `Most Recent Download` command awaits its error toasts and `Recent Folders` releases the loading spinner on storage failures
 
 ## [Fixed the Folder and Files Speed Dial keyboard exception] - 2024-10-09
 

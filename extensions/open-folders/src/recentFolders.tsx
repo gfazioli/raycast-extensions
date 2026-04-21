@@ -8,10 +8,9 @@ export default function Command() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getRecentFolders().then((folders) => {
-      setRecent(folders);
-      setIsLoading(false);
-    });
+    getRecentFolders()
+      .then(setRecent)
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
