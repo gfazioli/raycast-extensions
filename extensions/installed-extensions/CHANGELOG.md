@@ -1,5 +1,13 @@
 # Installed Extensions Changelog
 
+## [Sort by Recently Updated] - 2026-04-22
+
+- Add `Sort By` preference with `Title (A–Z)` (default) and `Recently Updated` options to quickly spot extensions refreshed by "Check for Updates"
+- Add a `Just Updated` tag when an extension was updated in the last hour so you can find fresh updates at a glance even when sorting alphabetically
+- Add `Show in Finder` / `Show in Explorer` action to reveal the extension folder (useful for local extension development)
+- Persist the `Extension Type` filter across launches (`storeValue`)
+- Use `mtime` instead of `ctime` so the "Last updated" accessory reflects the actual manifest modification time
+
 ## [Cross-plaform Keyboard Shortcuts] - 2026-01-05
 
 - Update `shortcut`s to be cross-platform

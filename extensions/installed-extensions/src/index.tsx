@@ -19,6 +19,8 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
+const RECENTLY_UPDATED_WINDOW_MS = 60 * 60 * 1000;
+
 async function getPackageJsonFiles() {
   try {
     const extensionsDir = path.join(os.homedir(), ".config", isWindows ? "raycast-x" : "raycast", "extensions");
@@ -97,14 +99,17 @@ export default function IndexCommand() {
           title: json.title,
           handle: `${owner ?? author}/${name}`,
           link,
-          created: stats.ctime,
-          isLocalExtension: !/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/gi.test(cleanedPath),
+          updatedAt: stats.mtime,
+          isLocalExtension: !/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i.test(cleanedPath),
         };
       }),
     );
 
     result = result.filter((item) => item.title !== "" && item.author !== "");
-    result = result.sort((a, b) => a.title.localeCompare(b.title));
+    result =
+      preferences.sortBy === "updated"
+        ? result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+        : result.sort((a, b) => a.title.localeCompare(b.title));
 
     setInstalledExtensions(result);
 
@@ -119,7 +124,7 @@ export default function IndexCommand() {
     return (
       <List.Dropdown
         tooltip="Select Extension Type"
-        storeValue={false}
+        storeValue={true}
         onChange={(newValue) => {
           onExtensionTypeChange(newValue);
         }}
@@ -179,7 +184,16 @@ export default function IndexCommand() {
               });
             }
 
-            const date = new Date(item.created);
+            const date = new Date(item.updatedAt);
+            const isRecentlyUpdated = Date.now() - date.getTime() < RECENTLY_UPDATED_WINDOW_MS;
+
+            if (isRecentlyUpdated) {
+              accessories.push({
+                tag: { color: Color.Yellow, value: "Just Updated" },
+                icon: Icon.Stars,
+                tooltip: `Updated ${date.toLocaleString()}`,
+              });
+            }
 
             accessories.push({ tag: `${item.commandCount}`, icon: Icon.ComputerChip, tooltip: "Commands" });
             accessories.push({ date: date, tooltip: `Last updated: ${date.toLocaleString()}` });
@@ -225,6 +239,15 @@ export default function IndexCommand() {
                     </ActionPanel.Section>
                     <ActionPanel.Section>
                       <OpenManifestInDefaultAppAction url={path.join(item.path, "package.json")} />
+                      <Action
+                        title={isWindows ? "Show in Explorer" : "Show in Finder"}
+                        icon={Icon.Folder}
+                        onAction={() => open(item.path)}
+                        shortcut={{
+                          macOS: { modifiers: ["cmd", "shift"], key: "f" },
+                          Windows: { modifiers: ["ctrl", "shift"], key: "f" },
+                        }}
+                      />
                     </ActionPanel.Section>
                     <Action
                       title="Open Extension Preferences"

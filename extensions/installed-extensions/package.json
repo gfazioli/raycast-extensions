@@ -10,7 +10,8 @@
     "tonka3000",
     "litomore",
     "ridemountainpig",
-    "xmok"
+    "xmok",
+    "Undolog"
   ],
   "platforms": [
     "macOS",
@@ -27,6 +28,24 @@
       "description": "List your current installed Raycast extensions",
       "mode": "view",
       "preferences": [
+        {
+          "name": "sortBy",
+          "description": "Choose how the list is sorted",
+          "type": "dropdown",
+          "required": false,
+          "default": "title",
+          "title": "Sort By",
+          "data": [
+            {
+              "title": "Title (A–Z)",
+              "value": "title"
+            },
+            {
+              "title": "Recently Updated",
+              "value": "updated"
+            }
+          ]
+        },
         {
           "name": "separator",
           "description": "Select output format",
