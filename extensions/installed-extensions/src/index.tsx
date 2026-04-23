@@ -99,7 +99,11 @@ export default function IndexCommand() {
           title: json.title,
           handle: `${owner ?? author}/${name}`,
           link,
-          updatedAt: stats.mtime,
+          // ctime, not mtime: Raycast extracts extensions from tarballs that preserve the publisher's
+          // build-time mtime, so mtime reflects when the extension was built upstream. ctime is updated
+          // when the file is written to this filesystem, which matches "when did this extension update
+          // locally" — the signal users want when running Check for Updates.
+          updatedAt: stats.ctime,
           isLocalExtension: !/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i.test(cleanedPath),
         };
       }),
