@@ -1,5 +1,11 @@
 # GitHub Changelog
 
+## [Add My GitHub Stats Menu Bar] - {PR_MERGE_DATE}
+
+- Added a new `My GitHub Stats Menu Bar` command that surfaces profile stats (Followers, Following, Stars Received, Forks Received, PRs Authored/Merged/Open, Issues Authored/Open, Commits in the last year, Public Repos, Organizations) directly in the macOS menu bar
+- Added a `Menu Bar Title` preference to choose which metric is shown next to the icon: Followers (default), Stars Received, Open PRs, Open Issues, or Icon only
+- Each item opens the relevant GitHub page (profile tabs, search queries, organizations) on click
+
 ## [Fix PR List Accessories Alignment] - 2026-04-13
 
 - Pull Requests: Always show comment count (zero shown as dimmed) to prevent accessories from shifting
