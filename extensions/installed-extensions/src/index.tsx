@@ -184,19 +184,18 @@ export default function IndexCommand() {
               });
             }
 
-            const date = new Date(item.updatedAt);
-            const isRecentlyUpdated = Date.now() - date.getTime() < RECENTLY_UPDATED_WINDOW_MS;
+            const isRecentlyUpdated = Date.now() - item.updatedAt.getTime() < RECENTLY_UPDATED_WINDOW_MS;
 
             if (isRecentlyUpdated) {
               accessories.push({
                 tag: { color: Color.Yellow, value: "Just Updated" },
                 icon: Icon.Stars,
-                tooltip: `Updated ${date.toLocaleString()}`,
+                tooltip: `Updated ${item.updatedAt.toLocaleString()}`,
               });
             }
 
             accessories.push({ tag: `${item.commandCount}`, icon: Icon.ComputerChip, tooltip: "Commands" });
-            accessories.push({ date: date, tooltip: `Last updated: ${date.toLocaleString()}` });
+            accessories.push({ date: item.updatedAt, tooltip: `Last updated: ${item.updatedAt.toLocaleString()}` });
 
             return (
               <List.Item
