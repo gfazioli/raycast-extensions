@@ -38,8 +38,9 @@ function MyStatsMenu() {
 
   const login = data?.profile.login;
   const profileUrl = data?.profile.url ?? (login ? `https://github.com/${login}` : "https://github.com");
-  const searchUrl = (query: string) =>
-    `https://github.com/search?type=${query.startsWith("is:pr") ? "pullrequests" : "issues"}&q=${encodeURIComponent(query)}`;
+  const searchUrl = (type: "pullrequests" | "issues" | "commits", query: string) =>
+    `https://github.com/search?type=${type}&q=${encodeURIComponent(query)}`;
+  const partialTooltip = "Aggregated over the top 100 owned repositories by stars";
 
   const menuBarIcon: Image.ImageLike =
     useAvatarAsIcon && data?.profile.avatarUrl
@@ -80,10 +81,14 @@ function MyStatsMenu() {
               onAction={() => open(`${profileUrl}?tab=following`)}
             />
             <MenuBarItem
-              title={data.social.starsPartial ? "Stars Received (top 100 repos)" : "Stars Received"}
-              subtitle={formatNumber(data.social.starsReceived)}
+              title="Stars Received"
+              subtitle={
+                data.social.ownedReposPartial
+                  ? `${formatNumber(data.social.starsReceived)}+`
+                  : formatNumber(data.social.starsReceived)
+              }
               icon={Icon.Star}
-              tooltip={data.social.starsPartial ? "Aggregated over the top 100 owned repositories by stars" : undefined}
+              tooltip={data.social.ownedReposPartial ? partialTooltip : undefined}
               onAction={() => open(`${profileUrl}?tab=repositories`)}
             />
             <MenuBarItem
@@ -99,26 +104,26 @@ function MyStatsMenu() {
               title="PRs Authored"
               subtitle={formatNumber(data.activity.prsAuthored)}
               icon={{ source: "pull-request-open.svg", tintColor: Color.PrimaryText }}
-              onAction={() => open(searchUrl(`is:pr author:${data.profile.login}`))}
+              onAction={() => open(searchUrl("pullrequests", `is:pr author:${data.profile.login}`))}
             />
             <MenuBarItem
               title="PRs Merged"
               subtitle={`${formatNumber(data.activity.prsMerged)} (${data.activity.mergeRate}%)`}
               icon={{ source: "pull-request-merged.svg", tintColor: Color.PrimaryText }}
               tooltip={`${data.activity.mergeRate}% of authored PRs were merged`}
-              onAction={() => open(searchUrl(`is:pr is:merged author:${data.profile.login}`))}
+              onAction={() => open(searchUrl("pullrequests", `is:pr is:merged author:${data.profile.login}`))}
             />
             <MenuBarItem
               title="Issues Authored"
               subtitle={formatNumber(data.activity.issuesAuthored)}
               icon={{ source: "issue-open.svg", tintColor: Color.PrimaryText }}
-              onAction={() => open(searchUrl(`is:issue author:${data.profile.login}`))}
+              onAction={() => open(searchUrl("issues", `is:issue author:${data.profile.login}`))}
             />
             <MenuBarItem
               title="Commits (last year)"
               subtitle={formatNumber(data.activity.commitsYear)}
               icon={{ source: "commit.svg", tintColor: Color.PrimaryText }}
-              onAction={() => open(profileUrl)}
+              onAction={() => open(searchUrl("commits", `author:${data.profile.login}`))}
             />
           </MenuBarSection>
 
@@ -132,25 +137,25 @@ function MyStatsMenu() {
             <MenuBarItem
               title="Forks Received"
               subtitle={
-                data.social.starsPartial
+                data.social.ownedReposPartial
                   ? `${formatNumber(data.social.forksReceived)}+`
                   : formatNumber(data.social.forksReceived)
               }
               icon={{ source: "branch.svg", tintColor: Color.PrimaryText }}
-              tooltip={data.social.starsPartial ? "Aggregated over the top 100 owned repositories by stars" : undefined}
+              tooltip={data.social.ownedReposPartial ? partialTooltip : undefined}
               onAction={() => open(`${profileUrl}?tab=repositories`)}
             />
             <MenuBarItem
               title="Open PRs"
               subtitle={formatNumber(data.activity.prsOpen)}
               icon={{ source: "pull-request-open.svg", tintColor: Color.PrimaryText }}
-              onAction={() => open(searchUrl(`is:pr is:open author:${data.profile.login}`))}
+              onAction={() => open(searchUrl("pullrequests", `is:pr is:open author:${data.profile.login}`))}
             />
             <MenuBarItem
               title="Open Issues"
               subtitle={formatNumber(data.activity.issuesOpen)}
               icon={{ source: "issue-open.svg", tintColor: Color.PrimaryText }}
-              onAction={() => open(searchUrl(`is:issue is:open author:${data.profile.login}`))}
+              onAction={() => open(searchUrl("issues", `is:issue is:open author:${data.profile.login}`))}
             />
           </MenuBarSection>
 

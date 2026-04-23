@@ -36,7 +36,7 @@ export function useViewerStats() {
         starred: viewer.starredRepositories.totalCount,
         starsReceived,
         forksReceived,
-        starsPartial: hasMoreRepos,
+        ownedReposPartial: hasMoreRepos,
       },
       activity: {
         prsAuthored,

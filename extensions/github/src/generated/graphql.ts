@@ -21478,6 +21478,8 @@ export type ProjectV2SingleSelectFieldOptionInput = {
   color: ProjectV2SingleSelectFieldOptionColor;
   /** The description text of the option */
   description: Scalars["String"]["input"];
+  /** The ID of an existing single select option. Include this to preserve the option's identity during updates, preventing item field values from being cleared. */
+  id?: InputMaybe<Scalars["String"]["input"]>;
   /** The name of the option */
   name: Scalars["String"]["input"];
 };
@@ -40331,12 +40333,7 @@ export type GetViewerStatsQuery = {
     pullRequestsOpen: { __typename?: "PullRequestConnection"; totalCount: number };
     issuesAuthored: { __typename?: "IssueConnection"; totalCount: number };
     issuesOpen: { __typename?: "IssueConnection"; totalCount: number };
-    contributionsCollection: {
-      __typename?: "ContributionsCollection";
-      totalCommitContributions: number;
-      totalPullRequestContributions: number;
-      totalIssueContributions: number;
-    };
+    contributionsCollection: { __typename?: "ContributionsCollection"; totalCommitContributions: number };
     publicRepos: { __typename?: "RepositoryConnection"; totalCount: number };
     ownedRepositories: {
       __typename?: "RepositoryConnection";
@@ -41563,8 +41560,6 @@ export const GetViewerStatsDocument = gql`
       }
       contributionsCollection {
         totalCommitContributions
-        totalPullRequestContributions
-        totalIssueContributions
       }
       publicRepos: repositories(ownerAffiliations: OWNER, privacy: PUBLIC) {
         totalCount

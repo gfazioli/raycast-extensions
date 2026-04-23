@@ -33,8 +33,6 @@ query getViewerStats($repositoriesCount: Int = 100) {
     }
     contributionsCollection {
       totalCommitContributions
-      totalPullRequestContributions
-      totalIssueContributions
     }
     publicRepos: repositories(ownerAffiliations: OWNER, privacy: PUBLIC) {
       totalCount
