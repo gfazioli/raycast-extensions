@@ -1,6 +1,16 @@
-import { Action, ActionPanel, Color, Icon, List, getPreferenceValues, open, openExtensionPreferences } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Color,
+  Icon,
+  List,
+  getPreferenceValues,
+  open,
+  openExtensionPreferences,
+} from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useRef, useState } from "react";
+import { ExtensionTypeDropdown } from "./components/ExtensionTypeDropdown";
 import { OpenManifestInDefaultAppAction } from "./components/OpenManifestInDefaultAppAction";
 import {
   LIST_PAGE_SIZE,
@@ -9,12 +19,8 @@ import {
   STAT_CONCURRENCY,
   extensionTypes,
 } from "./helpers/constants";
-import {
-  getPackageJsonFiles,
-  packageJsonMatchesExtensionFilter,
-  parsePackageJson,
-} from "./helpers/extension-scan";
-import { ExtensionMetadata, Option } from "./types";
+import { getPackageJsonFiles, packageJsonMatchesExtensionFilter, parsePackageJson } from "./helpers/extension-scan";
+import { ExtensionMetadata } from "./types";
 import { formatItem, formatOutput, isWindows, mapInBatches } from "./helpers/utils";
 import fs from "fs/promises";
 import path from "path";
@@ -86,28 +92,6 @@ export default function IndexCommand() {
 
   const installedExtensions = data ?? [];
 
-  function ExtensionTypeDropdown(props: {
-    ExtensionTypes: Option[];
-    onExtensionTypeChange: (newValue: string) => void;
-  }) {
-    const { ExtensionTypes, onExtensionTypeChange } = props;
-    return (
-      <List.Dropdown
-        tooltip="Select Extension Type"
-        storeValue={true}
-        onChange={(newValue) => {
-          onExtensionTypeChange(newValue);
-        }}
-      >
-        <List.Dropdown.Section title="Extension Type">
-          {ExtensionTypes.map((extensionType) => (
-            <List.Dropdown.Item key={extensionType.id} title={extensionType.name} value={extensionType.id} />
-          ))}
-        </List.Dropdown.Section>
-      </List.Dropdown>
-    );
-  }
-
   const sectionSubtitle =
     totalExtensionCount > 0
       ? `${installedExtensions.length} / ${totalExtensionCount}`
@@ -118,7 +102,7 @@ export default function IndexCommand() {
       isLoading={isLoading}
       pagination={pagination}
       searchBarAccessory={
-        <ExtensionTypeDropdown ExtensionTypes={extensionTypes} onExtensionTypeChange={setExtensionTypeFilter} />
+        <ExtensionTypeDropdown extensionTypes={extensionTypes} onExtensionTypeChange={setExtensionTypeFilter} />
       }
     >
       <List.EmptyView
