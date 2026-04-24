@@ -1,132 +1,90 @@
+import { Action, ActionPanel, Color, Icon, List, getPreferenceValues, open, openExtensionPreferences } from "@raycast/api";
+import { useCachedPromise } from "@raycast/utils";
+import { useRef, useState } from "react";
+import { OpenManifestInDefaultAppAction } from "./components/OpenManifestInDefaultAppAction";
 import {
-  Action,
-  ActionPanel,
-  Application,
-  Color,
-  Icon,
-  List,
-  getDefaultApplication,
-  getPreferenceValues,
-  open,
-  openExtensionPreferences,
-} from "@raycast/api";
-import { useCachedPromise, showFailureToast } from "@raycast/utils";
-import { useEffect, useState } from "react";
+  LIST_PAGE_SIZE,
+  PARSE_CONCURRENCY,
+  RECENTLY_UPDATED_WINDOW_MS,
+  STAT_CONCURRENCY,
+  extensionTypes,
+} from "./helpers/constants";
+import {
+  getPackageJsonFiles,
+  packageJsonMatchesExtensionFilter,
+  parsePackageJson,
+} from "./helpers/extension-scan";
 import { ExtensionMetadata, Option } from "./types";
-import { extensionTypes } from "./constants";
-import { formatItem, formatOutput, isWindows } from "./utils";
+import { formatItem, formatOutput, isWindows, mapInBatches } from "./helpers/utils";
 import fs from "fs/promises";
-import os from "os";
 import path from "path";
-
-const RECENTLY_UPDATED_WINDOW_MS = 60 * 60 * 1000;
-const LOCAL_EXTENSION_UUID_PATTERN = /[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i;
-
-async function getPackageJsonFiles() {
-  try {
-    const extensionsDir = path.join(os.homedir(), ".config", isWindows ? "raycast-x" : "raycast", "extensions");
-    const extensions = await fs.readdir(extensionsDir);
-    const packageJsonFiles = await Promise.all(
-      extensions.map(async (extension) => {
-        const packageJsonPath = path.join(extensionsDir, extension, "package.json");
-        try {
-          await fs.access(packageJsonPath, fs.constants.F_OK);
-          return packageJsonPath;
-        } catch {
-          return null;
-        }
-      }),
-    );
-    return packageJsonFiles.filter((file) => file !== null) as string[];
-  } catch (e) {
-    if (e instanceof Error) {
-      showFailureToast(e.message);
-      throw new Error(e.message);
-    }
-    throw new Error("An unknown error occurred");
-  }
-}
-
-function OpenManifestInDefaultAppAction(props: { url: string }) {
-  const [defaultApp, setDefaultApp] = useState<Application>();
-  useEffect(() => {
-    getDefaultApplication(props.url)
-      .then((app) => setDefaultApp(app))
-      .catch(() => setDefaultApp(undefined));
-  }, [props.url]);
-  if (!defaultApp) {
-    return null;
-  }
-  return (
-    <Action.Open
-      title={`Open Manifest in ${defaultApp.name}`}
-      target={props.url}
-      icon={{ fileIcon: defaultApp.path }}
-      shortcut={{
-        macOS: { modifiers: ["cmd", "shift"], key: "m" },
-        Windows: { modifiers: ["ctrl", "shift"], key: "m" },
-      }}
-    />
-  );
-}
 
 export default function IndexCommand() {
   const preferences = getPreferenceValues<Preferences.Index>();
 
-  const [installedExtensions, setInstalledExtensions] = useState<ExtensionMetadata[]>([]);
-  const { isLoading, data, error } = useCachedPromise(async () => {
-    const files = await getPackageJsonFiles();
-    const parsed = await Promise.all(
-      files.map(async (file): Promise<ExtensionMetadata | null> => {
-        try {
-          const content = await fs.readFile(file, "utf-8");
-          const stats = await fs.stat(file);
-          const json = JSON.parse(content);
+  const [extensionTypeFilter, setExtensionTypeFilter] = useState("all");
+  const [totalExtensionCount, setTotalExtensionCount] = useState(0);
+  const orderedPathsRef = useRef<string[]>([]);
+  const titleSortedMetadataRef = useRef<ExtensionMetadata[]>([]);
 
-          const author: string = json.author;
-          const owner: string | undefined = json?.owner;
-          const access: string | undefined = json?.access;
-          const name: string = json.name;
-          const link = `https://raycast.com/${owner ?? author}/${name}`;
-          const cleanedPath = path.dirname(file);
+  const { isLoading, data, error, pagination } = useCachedPromise(
+    (sortBy: Preferences.Index["sortBy"], extensionFilter: string) =>
+      async ({ page }: { page: number }) => {
+        if (page === 0) {
+          orderedPathsRef.current = [];
+          titleSortedMetadataRef.current = [];
 
-          return {
-            path: cleanedPath,
-            name,
-            author,
-            icon: json.icon,
-            commandCount: Array.isArray(json.commands) ? json.commands.length : 0,
-            owner,
-            access,
-            title: json.title,
-            handle: `${owner ?? author}/${name}`,
-            link,
-            // ctime, not mtime: Raycast extracts extensions from tarballs that preserve the publisher's
-            // build-time mtime, so mtime reflects when the extension was built upstream. ctime is updated
-            // when the file is written to this filesystem, which matches "when did this extension update
-            // locally" — the signal users want when running Check for Updates.
-            updatedAt: stats.ctime,
-            isLocalExtension: !LOCAL_EXTENSION_UUID_PATTERN.test(cleanedPath),
-          };
-        } catch (e) {
-          // A malformed or unreadable manifest for a single extension should not break the whole list.
-          console.warn(`Skipping extension manifest at ${file}:`, e);
-          return null;
+          const files = await getPackageJsonFiles();
+          const filteredPaths = files.filter((f) => packageJsonMatchesExtensionFilter(f, extensionFilter));
+          setTotalExtensionCount(filteredPaths.length);
+
+          if (filteredPaths.length === 0) {
+            return { data: [] as ExtensionMetadata[], hasMore: false };
+          }
+
+          if (sortBy === "updated") {
+            const withCtime = await mapInBatches(filteredPaths, STAT_CONCURRENCY, async (file) => {
+              const st = await fs.stat(file);
+              return { file, ctime: st.ctime.getTime() };
+            });
+            withCtime.sort((a, b) => b.ctime - a.ctime);
+            orderedPathsRef.current = withCtime.map((x) => x.file);
+          } else {
+            const parsed = await mapInBatches(filteredPaths, PARSE_CONCURRENCY, parsePackageJson);
+            let metas = parsed.filter(
+              (item): item is ExtensionMetadata => item !== null && item.title !== "" && item.author !== "",
+            );
+            metas = metas.sort((a, b) => a.title.localeCompare(b.title));
+            titleSortedMetadataRef.current = metas;
+          }
         }
-      }),
-    );
 
-    let result = parsed.filter((item): item is ExtensionMetadata => item !== null);
-    result = result.filter((item) => item.title !== "" && item.author !== "");
-    result =
-      preferences.sortBy === "updated"
-        ? result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-        : result.sort((a, b) => a.title.localeCompare(b.title));
+        if (sortBy === "updated") {
+          const ordered = orderedPathsRef.current;
+          if (ordered.length === 0) {
+            return { data: [] as ExtensionMetadata[], hasMore: false };
+          }
+          const start = page * LIST_PAGE_SIZE;
+          const slice = ordered.slice(start, start + LIST_PAGE_SIZE);
+          const parsed = await mapInBatches(slice, PARSE_CONCURRENCY, parsePackageJson);
+          const pageData = parsed.filter(
+            (item): item is ExtensionMetadata => item !== null && item.title !== "" && item.author !== "",
+          );
+          return { data: pageData, hasMore: start + LIST_PAGE_SIZE < ordered.length };
+        }
 
-    setInstalledExtensions(result);
+        const ordered = titleSortedMetadataRef.current;
+        if (ordered.length === 0) {
+          return { data: [] as ExtensionMetadata[], hasMore: false };
+        }
+        const start = page * LIST_PAGE_SIZE;
+        const pageData = ordered.slice(start, start + LIST_PAGE_SIZE);
+        return { data: pageData, hasMore: start + LIST_PAGE_SIZE < ordered.length };
+      },
+    [preferences.sortBy, extensionTypeFilter],
+  );
 
-    return result;
-  });
+  const installedExtensions = data ?? [];
 
   function ExtensionTypeDropdown(props: {
     ExtensionTypes: Option[];
@@ -150,20 +108,17 @@ export default function IndexCommand() {
     );
   }
 
-  const onExtensionTypeChange = (newValue: string) => {
-    const filteredExtensions: ExtensionMetadata[] =
-      data?.filter((item) => {
-        return newValue === "local" ? item.isLocalExtension : newValue === "store" ? !item.isLocalExtension : true;
-      }) || [];
-
-    setInstalledExtensions(filteredExtensions);
-  };
+  const sectionSubtitle =
+    totalExtensionCount > 0
+      ? `${installedExtensions.length} / ${totalExtensionCount}`
+      : `${installedExtensions.length}`;
 
   return (
     <List
       isLoading={isLoading}
+      pagination={pagination}
       searchBarAccessory={
-        <ExtensionTypeDropdown ExtensionTypes={extensionTypes} onExtensionTypeChange={onExtensionTypeChange} />
+        <ExtensionTypeDropdown ExtensionTypes={extensionTypes} onExtensionTypeChange={setExtensionTypeFilter} />
       }
     >
       <List.EmptyView
@@ -171,9 +126,9 @@ export default function IndexCommand() {
         icon={error ? { source: Icon.Warning, tintColor: Color.Red } : "noview.png"}
       />
 
-      <List.Section title="Installed Extensions" subtitle={`${installedExtensions?.length}`}>
+      <List.Section title="Installed Extensions" subtitle={sectionSubtitle}>
         {installedExtensions &&
-          installedExtensions.map((item) => {
+          installedExtensions.map((item: ExtensionMetadata) => {
             const accessories = [];
             if (item.isLocalExtension) {
               accessories.push({
@@ -211,7 +166,7 @@ export default function IndexCommand() {
 
             return (
               <List.Item
-                key={item.handle}
+                key={item.path}
                 icon={path.join(item.path, "assets", item.icon)}
                 title={item.title}
                 keywords={[item.author]}
