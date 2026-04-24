@@ -1,6 +1,6 @@
 # Installed Extensions Changelog
 
-## [Sort by Recently Updated] - {PR_MERGE_DATE}
+## [Sort by Recently Updated] - 2026-04-24
 
 - Add `Sort By` preference with `Title (A–Z)` (default) and `Recently Updated` options to quickly spot extensions refreshed by "Check for Updates"
 - Add a `Just Updated` tag when an extension was updated in the last hour so you can find fresh updates at a glance even when sorting alphabetically
