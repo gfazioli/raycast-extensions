@@ -20,6 +20,7 @@ import os from "os";
 import path from "path";
 
 const RECENTLY_UPDATED_WINDOW_MS = 60 * 60 * 1000;
+const LOCAL_EXTENSION_UUID_PATTERN = /[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i;
 
 async function getPackageJsonFiles() {
   try {
@@ -75,40 +76,47 @@ export default function IndexCommand() {
   const [installedExtensions, setInstalledExtensions] = useState<ExtensionMetadata[]>([]);
   const { isLoading, data, error } = useCachedPromise(async () => {
     const files = await getPackageJsonFiles();
-    let result = await Promise.all(
-      files.map(async (file) => {
-        const content = await fs.readFile(file, "utf-8");
-        const stats = await fs.stat(file);
-        const json = JSON.parse(content);
+    const parsed = await Promise.all(
+      files.map(async (file): Promise<ExtensionMetadata | null> => {
+        try {
+          const content = await fs.readFile(file, "utf-8");
+          const stats = await fs.stat(file);
+          const json = JSON.parse(content);
 
-        const author: string = json.author;
-        const owner: string | undefined = json?.owner;
-        const access: string | undefined = json?.access;
-        const name: string = json.name;
-        const link = `https://raycast.com/${owner ?? author}/${name}`;
-        const cleanedPath = path.dirname(file);
+          const author: string = json.author;
+          const owner: string | undefined = json?.owner;
+          const access: string | undefined = json?.access;
+          const name: string = json.name;
+          const link = `https://raycast.com/${owner ?? author}/${name}`;
+          const cleanedPath = path.dirname(file);
 
-        return {
-          path: cleanedPath,
-          name,
-          author,
-          icon: json.icon,
-          commandCount: json.commands.length,
-          owner,
-          access,
-          title: json.title,
-          handle: `${owner ?? author}/${name}`,
-          link,
-          // ctime, not mtime: Raycast extracts extensions from tarballs that preserve the publisher's
-          // build-time mtime, so mtime reflects when the extension was built upstream. ctime is updated
-          // when the file is written to this filesystem, which matches "when did this extension update
-          // locally" — the signal users want when running Check for Updates.
-          updatedAt: stats.ctime,
-          isLocalExtension: !/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i.test(cleanedPath),
-        };
+          return {
+            path: cleanedPath,
+            name,
+            author,
+            icon: json.icon,
+            commandCount: Array.isArray(json.commands) ? json.commands.length : 0,
+            owner,
+            access,
+            title: json.title,
+            handle: `${owner ?? author}/${name}`,
+            link,
+            // ctime, not mtime: Raycast extracts extensions from tarballs that preserve the publisher's
+            // build-time mtime, so mtime reflects when the extension was built upstream. ctime is updated
+            // when the file is written to this filesystem, which matches "when did this extension update
+            // locally" — the signal users want when running Check for Updates.
+            updatedAt: stats.ctime,
+            isLocalExtension: !LOCAL_EXTENSION_UUID_PATTERN.test(cleanedPath),
+          };
+        } catch (e) {
+          // A malformed or unreadable manifest for a single extension should not break the whole list.
+          console.warn(`Skipping extension manifest at ${file}:`, e);
+          return null;
+        }
       }),
     );
 
+    let result = parsed.filter((item): item is ExtensionMetadata => item !== null);
     result = result.filter((item) => item.title !== "" && item.author !== "");
     result =
       preferences.sortBy === "updated"
@@ -165,7 +173,7 @@ export default function IndexCommand() {
 
       <List.Section title="Installed Extensions" subtitle={`${installedExtensions?.length}`}>
         {installedExtensions &&
-          installedExtensions.map((item, index) => {
+          installedExtensions.map((item) => {
             const accessories = [];
             if (item.isLocalExtension) {
               accessories.push({
@@ -203,7 +211,7 @@ export default function IndexCommand() {
 
             return (
               <List.Item
-                key={index}
+                key={item.handle}
                 icon={path.join(item.path, "assets", item.icon)}
                 title={item.title}
                 keywords={[item.author]}
