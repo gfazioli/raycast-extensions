@@ -46,4 +46,17 @@ export const menubarTweaks: TweakDefinition[] = [
     risk: "safe",
     tags: ["bluetooth", "icon"],
   },
+  {
+    id: "menubar-menu-action-images",
+    title: "Show Icons in Menus",
+    description: "Show the icons next to menu items (e.g. File › New Folder in Finder). Introduced in macOS Tahoe.",
+    category: "menubar",
+    domain: "NSGlobalDomain",
+    key: "NSMenuEnableActionImages",
+    type: "boolean",
+    defaultValue: true,
+    minMacOS: "26.0",
+    risk: "safe",
+    tags: ["menu", "icons", "tahoe"],
+  },
 ];

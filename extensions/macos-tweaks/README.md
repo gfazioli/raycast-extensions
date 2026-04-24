@@ -18,7 +18,7 @@ Discover and toggle hidden macOS settings without the Terminal. Browse a curated
 
 ## Features
 
-- 72 curated tweaks across 13 categories
+- 73 curated tweaks across 13 categories
 - Filter by category or status (All / Modified / Default)
 - One-click toggle for boolean settings
 - Dropdown selection for enum settings (view style, screenshot format, minimize effect, etc.)

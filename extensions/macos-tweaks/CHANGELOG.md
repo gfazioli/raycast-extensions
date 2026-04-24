@@ -2,7 +2,7 @@
 
 ## [Initial Version] - {PR_MERGE_DATE}
 
-- Browse Tweaks: list and toggle 72 hidden macOS settings across 13 categories
+- Browse Tweaks: list and toggle 73 hidden macOS settings across 13 categories
 - My Tweaks: view modified settings, reset individually or all at once, export as shell commands
 - Tweaks Menu Bar: quick access and toggle from the menu bar
 - Detail panel with description, current/default values, domain, key, and full `defaults write` command
