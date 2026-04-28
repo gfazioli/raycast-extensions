@@ -123,9 +123,13 @@ export default function Command() {
         title="Refresh"
         icon={Icon.ArrowClockwise}
         shortcut={{ modifiers: ["cmd"], key: "r" }}
-        onAction={() => {
-          setIsLoading(true);
-          scan();
+        onAction={async () => {
+          await scan();
+          try {
+            await launchCommand({ name: "menu-bar", type: LaunchType.Background });
+          } catch {
+            // Re-launch fails if the menu bar command is not enabled — safe to ignore.
+          }
         }}
       />
       <MenuBarExtra.Item

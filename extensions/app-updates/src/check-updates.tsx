@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Color, Icon, List, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, LaunchType, List, launchCommand, showToast, Toast } from "@raycast/api";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { useEffect, useState } from "react";
@@ -17,6 +17,14 @@ const SOURCE_LABELS: Record<UpdateSource, { label: string; color: Color }> = {
   cask: { label: "Homebrew", color: Color.Orange },
   mas: { label: "App Store", color: Color.Blue },
 };
+
+async function refreshMenuBar() {
+  try {
+    await launchCommand({ name: "menu-bar", type: LaunchType.Background });
+  } catch {
+    // Re-launch fails if the menu bar command is not enabled — safe to ignore.
+  }
+}
 
 export default function Command() {
   const [updates, setUpdates] = useState<AppUpdate[]>([]);
@@ -48,6 +56,7 @@ export default function Command() {
         allUpdates.sort((a, b) => a.name.localeCompare(b.name));
         setUpdates(allUpdates);
         await storeUpdates(allUpdates);
+        await refreshMenuBar();
 
         if (allUpdates.length === 0) {
           toast.style = Toast.Style.Success;
@@ -69,6 +78,7 @@ export default function Command() {
   async function updateList(newUpdates: AppUpdate[]) {
     setUpdates(newUpdates);
     await storeUpdates(newUpdates);
+    await refreshMenuBar();
   }
 
   const grouped: Record<UpdateSource, AppUpdate[]> = {
