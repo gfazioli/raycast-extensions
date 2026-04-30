@@ -187,6 +187,14 @@ function EnumActions({ tweak, onUpdate }: { tweak: TweakState; onUpdate: () => v
             icon={isCurrent ? Icon.CheckCircle : Icon.Circle}
             onAction={async () => {
               try {
+                if (tweak.risk === "moderate") {
+                  const confirmed = await confirmAlert({
+                    title: `Set "${tweak.title}"?`,
+                    message: `This setting is marked as moderate risk.${tweak.requiresRestart ? ` ${tweak.requiresRestart} will be restarted.` : ""}`,
+                    primaryAction: { title: "Set", style: Alert.ActionStyle.Default },
+                  });
+                  if (!confirmed) return;
+                }
                 applyTweak(tweak, opt.value);
                 await showToast({
                   style: Toast.Style.Success,

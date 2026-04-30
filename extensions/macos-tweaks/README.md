@@ -31,21 +31,21 @@ Discover and toggle hidden macOS settings without the Terminal. Browse a curated
 
 ## Categories
 
-| Category | Tweaks | Examples |
-|---|---|---|
-| Finder | 16 | Show hidden files, path bar, POSIX path in title, disable .DS_Store, expand save/print panels |
-| Dock | 10 | Autohide delay, animation speed, minimize effect, hide recent apps |
-| Screenshots | 5 | File format, save location, disable shadow, disable thumbnail preview |
-| Desktop & Spaces | 6 | Disable auto-rearrange Spaces, hide desktop icons, hot corners |
-| Animations | 6 | Disable window animations, Mission Control speed, Launchpad, Finder |
-| Keyboard & Input | 5 | Key repeat rate, disable auto-correct, disable smart quotes |
-| Trackpad & Mouse | 4 | Tap to click, three-finger drag, tracking speed, scroll direction |
-| Safari | 5 | Full URL, Develop menu, disable auto-open downloads |
-| Mail | 3 | Copy address only, disable inline attachments, disable send animation |
-| Security | 2 | Password delay after sleep, quarantine warning |
-| Menu Bar & UI | 3 | Clock format, flash separators, Bluetooth icon |
-| Apps | 3 | TextEdit plain text, UTF-8, Activity Monitor all processes |
-| Miscellaneous | 4 | Crash reporter, skip DMG verification, spring loading, save to disk |
+| Category         | Tweaks | Examples                                                                                      |
+| ---------------- | ------ | --------------------------------------------------------------------------------------------- |
+| Finder           | 16     | Show hidden files, path bar, POSIX path in title, disable .DS_Store, expand save/print panels |
+| Dock             | 10     | Autohide delay, animation speed, minimize effect, hide recent apps                            |
+| Screenshots      | 5      | File format, save location, disable shadow, disable thumbnail preview                         |
+| Desktop & Spaces | 6      | Disable auto-rearrange Spaces, hide desktop icons, hot corners                                |
+| Animations       | 6      | Disable window animations, Mission Control speed, Launchpad, Finder                           |
+| Keyboard & Input | 5      | Key repeat rate, disable auto-correct, disable smart quotes                                   |
+| Trackpad & Mouse | 4      | Tap to click, three-finger drag, tracking speed, scroll direction                             |
+| Safari           | 5      | Full URL, Develop menu, disable auto-open downloads                                           |
+| Mail             | 3      | Copy address only, disable inline attachments, disable send animation                         |
+| Security         | 2      | Password delay after sleep, quarantine warning                                                |
+| Menu Bar & UI    | 3      | Clock format, flash separators, Bluetooth icon                                                |
+| Apps             | 3      | TextEdit plain text, UTF-8, Activity Monitor all processes                                    |
+| Miscellaneous    | 4      | Crash reporter, skip DMG verification, spring loading, save to disk                           |
 
 ## Author
 

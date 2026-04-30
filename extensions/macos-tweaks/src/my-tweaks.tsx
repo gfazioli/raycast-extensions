@@ -67,7 +67,7 @@ export default function MyTweaks() {
                         try {
                           resetTweak(tweak);
                           await showToast({ style: Toast.Style.Success, title: `${tweak.title}: Reset` });
-                          loadTweaks();
+                          await loadTweaks();
                         } catch (error) {
                           await showToast({
                             style: Toast.Style.Failure,
@@ -105,7 +105,7 @@ export default function MyTweaks() {
                             resetTweak(t);
                           }
                           await showToast({ style: Toast.Style.Success, title: "All tweaks reset to defaults" });
-                          loadTweaks();
+                          await loadTweaks();
                         } catch (error) {
                           await showToast({
                             style: Toast.Style.Failure,
