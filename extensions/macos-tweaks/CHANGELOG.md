@@ -1,6 +1,6 @@
 # macOS Tweaks Changelog
 
-## [Initial Version] - {PR_MERGE_DATE}
+## [Initial Version] - 2026-04-30
 
 - Browse Tweaks: list and toggle 73 hidden macOS settings across 13 categories
 - My Tweaks: view modified settings, reset individually or all at once, export as shell commands
