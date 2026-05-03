@@ -30,7 +30,7 @@ export async function scanSystem(): Promise<ScanResult[]> {
         size,
         risk: "safe",
         available: true,
-        cleanCommand: "rm -rf ~/Library/Logs/*",
+        cleanCommand: `rm -rf "${logsPath}"`,
         cleanAction: { type: "rmrf" },
         icon: "gear",
       });

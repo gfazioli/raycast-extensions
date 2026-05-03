@@ -23,6 +23,7 @@ const ARTIFACT_TARGETS = [
   ".build",
   "coverage",
   ".dart_tool",
+  ".gradle",
 ];
 
 /** Guarded targets — only clean if inside a project root with matching indicator */
