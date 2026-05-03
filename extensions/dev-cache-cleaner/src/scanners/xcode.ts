@@ -1,5 +1,5 @@
 import type { ScanResult } from "../types";
-import { expandHome, formatBytes, getItemCount, getSize, isDirPresent, isToolAvailable } from "../utils/disk";
+import { expandHome, formatBytes, getItemCount, getSizeAsync, isDirPresent, isToolAvailableAsync } from "../utils/disk";
 
 export async function scanXcode(): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
@@ -7,7 +7,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
   // DerivedData
   const derivedPath = expandHome("~/Library/Developer/Xcode/DerivedData");
   if (isDirPresent(derivedPath)) {
-    const size = getSize(derivedPath);
+    const size = await getSizeAsync(derivedPath);
     const count = getItemCount(derivedPath);
     results.push({
       id: "xcode-derived-data",
@@ -28,7 +28,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
   // Archives
   const archivesPath = expandHome("~/Library/Developer/Xcode/Archives");
   if (isDirPresent(archivesPath)) {
-    const size = getSize(archivesPath);
+    const size = await getSizeAsync(archivesPath);
     results.push({
       id: "xcode-archives",
       title: "Xcode Archives",
@@ -47,7 +47,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
   // iOS Device Support
   const deviceSupportPath = expandHome("~/Library/Developer/Xcode/iOS DeviceSupport");
   if (isDirPresent(deviceSupportPath)) {
-    const size = getSize(deviceSupportPath);
+    const size = await getSizeAsync(deviceSupportPath);
     const count = getItemCount(deviceSupportPath);
     results.push({
       id: "xcode-device-support",
@@ -68,7 +68,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
   // CoreSimulator — must use xcrun, not rm -rf
   const simPath = expandHome("~/Library/Developer/CoreSimulator");
   if (isDirPresent(simPath)) {
-    const size = getSize(simPath);
+    const size = await getSizeAsync(simPath);
     results.push({
       id: "xcode-simulators",
       title: "iOS Simulators (unavailable)",
@@ -77,7 +77,7 @@ export async function scanXcode(): Promise<ScanResult[]> {
       path: simPath,
       size,
       risk: "moderate",
-      available: isToolAvailable("xcrun"),
+      available: await isToolAvailableAsync("xcrun"),
       cleanCommand: "xcrun simctl delete unavailable",
       cleanAction: { type: "command", command: "xcrun", args: ["simctl", "delete", "unavailable"] },
       requiresTool: "xcrun",

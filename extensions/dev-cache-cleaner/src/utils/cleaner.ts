@@ -1,6 +1,9 @@
-import { execFileSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { existsSync } from "fs";
 import type { ScanResult } from "../types";
+
+const execFileAsync = promisify(execFile);
 
 /**
  * Clean a scan result using the appropriate method:
@@ -8,7 +11,7 @@ import type { ScanResult } from "../types";
  * - "command": run the tool-specific command
  * Returns the size that was freed (estimated).
  */
-export function cleanResult(result: ScanResult): number {
+export async function cleanResult(result: ScanResult): Promise<number> {
   const freed = result.size;
 
   try {
@@ -18,15 +21,9 @@ export function cleanResult(result: ScanResult): number {
       // treated as options (defense in depth, even though our paths are controlled).
       // We delete the directory itself rather than trashing it: cache directories
       // can be many GB and trashing them defeats the purpose (no immediate space freed).
-      execFileSync("rm", ["-rf", "--", result.path], {
-        timeout: 60000,
-        stdio: ["pipe", "pipe", "pipe"],
-      });
+      await execFileAsync("rm", ["-rf", "--", result.path], { timeout: 60000 });
     } else {
-      execFileSync(result.cleanAction.command, result.cleanAction.args, {
-        timeout: 120000,
-        stdio: ["pipe", "pipe", "pipe"],
-      });
+      await execFileAsync(result.cleanAction.command, result.cleanAction.args, { timeout: 120000 });
     }
     return freed;
   } catch {
@@ -37,11 +34,11 @@ export function cleanResult(result: ScanResult): number {
 /**
  * Clean all safe results and return total freed bytes.
  */
-export function cleanAllSafe(results: ScanResult[]): number {
+export async function cleanAllSafe(results: ScanResult[]): Promise<number> {
   let totalFreed = 0;
   for (const result of results) {
     if (result.risk === "safe" && result.available && result.size > 0) {
-      totalFreed += cleanResult(result);
+      totalFreed += await cleanResult(result);
     }
   }
   return totalFreed;

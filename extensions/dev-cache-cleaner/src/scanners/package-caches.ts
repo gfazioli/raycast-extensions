@@ -1,5 +1,5 @@
 import type { ScanResult } from "../types";
-import { expandHome, formatBytes, getSize, isDirPresent, isToolAvailable } from "../utils/disk";
+import { expandHome, formatBytes, getSizeAsync, isDirPresent, isToolAvailableAsync } from "../utils/disk";
 
 export async function scanPackageCaches(): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
@@ -7,7 +7,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // npm cache
   const npmPath = expandHome("~/.npm");
   if (isDirPresent(npmPath)) {
-    const size = getSize(npmPath);
+    const size = await getSizeAsync(npmPath);
     results.push({
       id: "npm-cache",
       title: "npm Cache",
@@ -16,7 +16,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
       path: npmPath,
       size,
       risk: "safe",
-      available: isToolAvailable("npm"),
+      available: await isToolAvailableAsync("npm"),
       cleanCommand: "npm cache clean --force",
       cleanAction: { type: "command", command: "npm", args: ["cache", "clean", "--force"] },
       requiresTool: "npm",
@@ -27,7 +27,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // Yarn cache
   const yarnPath = expandHome("~/Library/Caches/Yarn");
   if (isDirPresent(yarnPath)) {
-    const size = getSize(yarnPath);
+    const size = await getSizeAsync(yarnPath);
     results.push({
       id: "yarn-cache",
       title: "Yarn Cache",
@@ -46,7 +46,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // pnpm store
   const pnpmPath = expandHome("~/Library/pnpm/store");
   if (isDirPresent(pnpmPath)) {
-    const size = getSize(pnpmPath);
+    const size = await getSizeAsync(pnpmPath);
     results.push({
       id: "pnpm-store",
       title: "pnpm Store",
@@ -55,7 +55,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
       path: pnpmPath,
       size,
       risk: "safe",
-      available: isToolAvailable("pnpm"),
+      available: await isToolAvailableAsync("pnpm"),
       cleanCommand: "pnpm store prune",
       cleanAction: { type: "command", command: "pnpm", args: ["store", "prune"] },
       requiresTool: "pnpm",
@@ -66,7 +66,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // Homebrew cache
   const brewPath = expandHome("~/Library/Caches/Homebrew");
   if (isDirPresent(brewPath)) {
-    const size = getSize(brewPath);
+    const size = await getSizeAsync(brewPath);
     results.push({
       id: "homebrew-cache",
       title: "Homebrew Cache",
@@ -75,7 +75,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
       path: brewPath,
       size,
       risk: "safe",
-      available: isToolAvailable("brew"),
+      available: await isToolAvailableAsync("brew"),
       cleanCommand: "brew cleanup --prune=0",
       cleanAction: { type: "command", command: "brew", args: ["cleanup", "--prune=0"] },
       requiresTool: "brew",
@@ -86,7 +86,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // CocoaPods cache
   const podsPath = expandHome("~/Library/Caches/CocoaPods");
   if (isDirPresent(podsPath)) {
-    const size = getSize(podsPath);
+    const size = await getSizeAsync(podsPath);
     results.push({
       id: "cocoapods-cache",
       title: "CocoaPods Cache",
@@ -105,7 +105,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // pip cache
   const pipPath = expandHome("~/Library/Caches/pip");
   if (isDirPresent(pipPath)) {
-    const size = getSize(pipPath);
+    const size = await getSizeAsync(pipPath);
     results.push({
       id: "pip-cache",
       title: "pip Cache",
@@ -114,7 +114,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
       path: pipPath,
       size,
       risk: "safe",
-      available: isToolAvailable("pip3"),
+      available: await isToolAvailableAsync("pip3"),
       cleanCommand: "pip3 cache purge",
       cleanAction: { type: "command", command: "pip3", args: ["cache", "purge"] },
       requiresTool: "pip3",
@@ -125,7 +125,7 @@ export async function scanPackageCaches(): Promise<ScanResult[]> {
   // Composer cache (PHP)
   const composerPath = expandHome("~/Library/Caches/composer");
   if (isDirPresent(composerPath)) {
-    const size = getSize(composerPath);
+    const size = await getSizeAsync(composerPath);
     results.push({
       id: "composer-cache",
       title: "Composer Cache",

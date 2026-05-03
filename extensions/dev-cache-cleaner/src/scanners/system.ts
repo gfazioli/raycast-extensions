@@ -1,7 +1,8 @@
-import { execFileSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { join } from "path";
 import type { ScanResult } from "../types";
-import { expandHome, formatBytes, getSize, isDirPresent } from "../utils/disk";
+import { expandHome, formatBytes, getSizeAsync, isDirPresent } from "../utils/disk";
 
 /** Minimum size to report a cache entry (10 MB) */
 const MIN_REPORT_SIZE = 10 * 1024 * 1024;
@@ -18,7 +19,7 @@ export async function scanSystem(): Promise<ScanResult[]> {
   // User Logs
   const logsPath = expandHome("~/Library/Logs");
   if (isDirPresent(logsPath)) {
-    const size = getSize(logsPath);
+    const size = await getSizeAsync(logsPath);
     if (size > MIN_REPORT_SIZE) {
       results.push({
         id: "user-logs",
@@ -39,7 +40,7 @@ export async function scanSystem(): Promise<ScanResult[]> {
   // Top-level user cache consumers — single du call for all at once
   const cachesPath = expandHome("~/Library/Caches");
   if (isDirPresent(cachesPath)) {
-    const entries = listTopLevelCacheEntries(cachesPath);
+    const entries = await listTopLevelCacheEntries(cachesPath);
     for (const { name, size } of entries) {
       if (SKIP_PREFIXES.some((prefix) => name.startsWith(prefix))) continue;
       if (SKIP_ENTRIES.has(name)) continue;
@@ -70,13 +71,12 @@ export async function scanSystem(): Promise<ScanResult[]> {
  * List all top-level entries in a cache directory with their sizes
  * using a single `du -sk -d 1` call (much faster than N calls to getSize).
  */
-function listTopLevelCacheEntries(cachesPath: string): { name: string; size: number }[] {
+const execFileAsync = promisify(execFile);
+
+async function listTopLevelCacheEntries(cachesPath: string): Promise<{ name: string; size: number }[]> {
   try {
-    const output = execFileSync("du", ["-sk", "-d", "1", cachesPath], {
-      encoding: "utf-8",
-      timeout: 60000,
-      stdio: ["pipe", "pipe", "pipe"],
-    });
+    const { stdout } = await execFileAsync("du", ["-sk", "-d", "1", cachesPath], { timeout: 60000 });
+    const output = String(stdout);
 
     const entries: { name: string; size: number }[] = [];
     for (const line of output.trim().split("\n")) {

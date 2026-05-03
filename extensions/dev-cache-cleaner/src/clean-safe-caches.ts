@@ -48,7 +48,7 @@ export default async function CleanSafeCaches() {
       message: `${safeResults.length} items`,
     });
 
-    const freed = cleanAllSafe(results);
+    const freed = await cleanAllSafe(results);
 
     await showHUD(`Freed ${formatBytes(freed)} from ${safeResults.length} caches`);
   } catch (error) {

@@ -1,15 +1,15 @@
-import { execFileSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import type { ScanResult } from "../types";
-import { isToolAvailable } from "../utils/disk";
+import { isToolAvailableAsync } from "../utils/disk";
+
+const execFileAsync = promisify(execFile);
 
 export async function scanDocker(): Promise<ScanResult[]> {
-  if (!isToolAvailable("docker")) return [];
+  if (!(await isToolAvailableAsync("docker"))) return [];
 
   try {
-    execFileSync("docker", ["info"], {
-      timeout: 5000,
-      stdio: ["pipe", "pipe", "pipe"],
-    });
+    await execFileAsync("docker", ["info"], { timeout: 5000 });
   } catch {
     return [];
   }
@@ -17,11 +17,15 @@ export async function scanDocker(): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
 
   try {
-    const output = execFileSync("docker", ["system", "df", "--format", "{{.Type}}\t{{.Size}}\t{{.Reclaimable}}"], {
-      encoding: "utf-8",
-      timeout: 10000,
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+    const { stdout } = await execFileAsync(
+      "docker",
+      ["system", "df", "--format", "{{.Type}}\t{{.Size}}\t{{.Reclaimable}}"],
+      {
+        timeout: 10000,
+      },
+    );
+
+    const output = String(stdout).trim();
 
     for (const line of output.split("\n")) {
       const [type, , reclaimable] = line.split("\t");

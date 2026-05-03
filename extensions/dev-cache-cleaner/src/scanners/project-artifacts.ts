@@ -1,9 +1,10 @@
-import { execFileSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { existsSync } from "fs";
 import { basename, join } from "path";
 import { getPreferenceValues } from "@raycast/api";
 import type { ScanResult } from "../types";
-import { expandHome, formatAge, formatBytes, getLastModified, getSize } from "../utils/disk";
+import { expandHome, formatAge, formatBytes, getLastModified, getSizeAsync } from "../utils/disk";
 
 /** Build artifact directories to scan for, inspired by Mole's purge_shared.sh */
 const ARTIFACT_TARGETS = [
@@ -67,7 +68,7 @@ export async function scanProjectArtifacts(): Promise<ScanResult[]> {
 
   // Single find call with all targets at once — much faster than one per target
   const allTargets = [...ARTIFACT_TARGETS, ...GUARDED_TARGETS];
-  const found = findAllArtifacts(searchPaths, allTargets, 4);
+  const found = await findAllArtifacts(searchPaths, allTargets, 4);
 
   const results: ScanResult[] = [];
   const seen = new Set<string>();
@@ -86,7 +87,7 @@ export async function scanProjectArtifacts(): Promise<ScanResult[]> {
     const lastMod = getLastModified(artifactPath);
     if (now - lastMod < minAgeSeconds) continue;
 
-    const size = getSize(artifactPath);
+    const size = await getSizeAsync(artifactPath);
     if (size < 1024 * 1024) continue; // Skip < 1MB
 
     const projectName = getProjectName(artifactPath);
@@ -136,7 +137,9 @@ function getSearchPaths(customPaths?: string): string[] {
  * Single optimized find call across all search paths and targets.
  * Uses -maxdepth to limit scan depth and -prune to avoid descending into matches.
  */
-function findAllArtifacts(searchPaths: string[], targets: string[], maxDepth: number): string[] {
+const execFileAsync = promisify(execFile);
+
+async function findAllArtifacts(searchPaths: string[], targets: string[], maxDepth: number): Promise<string[]> {
   // Build: find path1 path2 ... -maxdepth N \( -name t1 -o -name t2 ... \) -type d -prune
   const args: string[] = [...searchPaths, "-maxdepth", String(maxDepth)];
   args.push("(");
@@ -147,11 +150,8 @@ function findAllArtifacts(searchPaths: string[], targets: string[], maxDepth: nu
   args.push(")", "-type", "d", "-prune");
 
   try {
-    const output = execFileSync("find", args, {
-      encoding: "utf-8",
-      timeout: 30000,
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+    const { stdout } = await execFileAsync("find", args, { timeout: 30000 });
+    const output = String(stdout).trim();
     if (!output) return [];
     return output.split("\n").filter(Boolean);
   } catch {

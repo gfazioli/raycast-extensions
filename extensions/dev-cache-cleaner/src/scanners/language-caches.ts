@@ -1,5 +1,5 @@
 import type { ScanResult } from "../types";
-import { expandHome, formatBytes, getSize, isDirPresent, isToolAvailable } from "../utils/disk";
+import { expandHome, formatBytes, getSizeAsync, isDirPresent, isToolAvailableAsync } from "../utils/disk";
 
 export async function scanLanguageCaches(): Promise<ScanResult[]> {
   const results: ScanResult[] = [];
@@ -7,7 +7,7 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
   // Gradle caches
   const gradlePath = expandHome("~/.gradle/caches");
   if (isDirPresent(gradlePath)) {
-    const size = getSize(gradlePath);
+    const size = await getSizeAsync(gradlePath);
     results.push({
       id: "gradle-cache",
       title: "Gradle Cache",
@@ -26,7 +26,7 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
   // Maven repository
   const mavenPath = expandHome("~/.m2/repository");
   if (isDirPresent(mavenPath)) {
-    const size = getSize(mavenPath);
+    const size = await getSizeAsync(mavenPath);
     results.push({
       id: "maven-cache",
       title: "Maven Local Repository",
@@ -45,7 +45,7 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
   // Cargo registry (Rust)
   const cargoPath = expandHome("~/.cargo/registry");
   if (isDirPresent(cargoPath)) {
-    const size = getSize(cargoPath);
+    const size = await getSizeAsync(cargoPath);
     results.push({
       id: "cargo-registry",
       title: "Cargo Registry",
@@ -64,7 +64,7 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
   // Go modules — use go clean which handles read-only files
   const goModPath = expandHome("~/go/pkg/mod");
   if (isDirPresent(goModPath)) {
-    const size = getSize(goModPath);
+    const size = await getSizeAsync(goModPath);
     results.push({
       id: "go-modules",
       title: "Go Module Cache",
@@ -73,7 +73,7 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
       path: goModPath,
       size,
       risk: "safe",
-      available: isToolAvailable("go"),
+      available: await isToolAvailableAsync("go"),
       cleanCommand: "go clean -modcache",
       cleanAction: { type: "command", command: "go", args: ["clean", "-modcache"] },
       requiresTool: "go",
@@ -84,7 +84,7 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
   // Ruby gem cache
   const rubyGemPath = expandHome("~/.gem");
   if (isDirPresent(rubyGemPath)) {
-    const size = getSize(rubyGemPath);
+    const size = await getSizeAsync(rubyGemPath);
     results.push({
       id: "ruby-gem-cache",
       title: "Ruby Gem Cache",

@@ -32,7 +32,9 @@ Scan and clean developer caches, build artifacts, and orphaned dependencies to r
 ## What It Scans
 
 ### Package Manager Caches
+
 Download caches that package managers re-create automatically on next install:
+
 - npm (`~/.npm`)
 - Yarn (`~/Library/Caches/Yarn`)
 - pnpm (`~/Library/pnpm/store`)
@@ -42,7 +44,9 @@ Download caches that package managers re-create automatically on next install:
 - Composer (`~/Library/Caches/composer`)
 
 ### Build Artifacts & Dependencies
+
 Scans your project directories for orphaned build artifacts **older than 30 days** (configurable):
+
 - `node_modules`, `.next`, `.nuxt`, `.turbo`, `.parcel-cache`, `.angular`, `.svelte-kit`, `.expo`
 - `dist`, `build`, `target` (Rust/Maven), `vendor` (PHP), `Pods` (CocoaPods)
 - `venv`, `.venv`, `__pycache__` (Python)
@@ -51,17 +55,21 @@ Scans your project directories for orphaned build artifacts **older than 30 days
 Rebuilding is as simple as running `npm install`, `cargo build`, or your usual build command.
 
 ### Xcode & iOS
+
 - DerivedData — build indexes, rebuilt automatically by Xcode
 - Archives — signed builds (marked as Review, requires confirmation)
 - iOS Device Support — debug symbols, re-downloaded when device is connected
 - iOS Simulators — unused runtimes (marked as Review, requires confirmation)
 
 ### Containers
+
 - Docker images, containers, volumes, and build cache (if Docker is installed)
 - Volumes are marked as Review since they may contain database data
 
 ### Language Caches
+
 Cached dependencies that re-download on next build:
+
 - Gradle (`~/.gradle/caches`)
 - Maven (`~/.m2/repository`)
 - Cargo/Rust (`~/.cargo/registry`)
@@ -69,6 +77,7 @@ Cached dependencies that re-download on next build:
 - Ruby gems (`~/.gem`)
 
 ### System Caches & Logs
+
 - User log files (`~/Library/Logs`) — apps recreate these automatically
 - Top application caches in `~/Library/Caches` — marked as Review, skips Apple system caches
 

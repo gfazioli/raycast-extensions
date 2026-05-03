@@ -148,7 +148,7 @@ function ResultItem({
                   });
                   if (!confirmed) return;
                 }
-                const freed = cleanResult(result);
+                const freed = await cleanResult(result);
                 if (freed > 0) {
                   await showToast({
                     style: Toast.Style.Success,
@@ -180,7 +180,7 @@ function ResultItem({
                   primaryAction: { title: "Clean All Safe" },
                 });
                 if (!confirmed) return;
-                const freed = cleanAllSafe(allResults);
+                const freed = await cleanAllSafe(allResults);
                 await showToast({
                   style: Toast.Style.Success,
                   title: "All safe caches cleaned",

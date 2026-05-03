@@ -1,4 +1,5 @@
-import { execFileSync } from "child_process";
+import { execFileSync, execFile } from "child_process";
+import { promisify } from "util";
 import { existsSync, statSync, readdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
@@ -16,6 +17,23 @@ export function getSize(path: string): number {
       timeout: 30000,
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
+    const kb = parseInt(output.split("\t")[0], 10);
+    return isNaN(kb) ? 0 : kb * 1024;
+  } catch {
+    return 0;
+  }
+}
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * Async version of getSize that uses `du` without blocking the event loop.
+ * Returns 0 if the path doesn't exist or on error.
+ */
+export async function getSizeAsync(path: string): Promise<number> {
+  try {
+    const { stdout } = await execFileAsync("du", ["-sk", path], { timeout: 30000 });
+    const output = String(stdout).trim();
     const kb = parseInt(output.split("\t")[0], 10);
     return isNaN(kb) ? 0 : kb * 1024;
   } catch {
@@ -70,6 +88,18 @@ export function isToolAvailable(tool: string): boolean {
       timeout: 5000,
       stdio: ["pipe", "pipe", "pipe"],
     });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Async version of `isToolAvailable`.
+ */
+export async function isToolAvailableAsync(tool: string): Promise<boolean> {
+  try {
+    await execFileAsync("which", [tool], { timeout: 5000 });
     return true;
   } catch {
     return false;
