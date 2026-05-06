@@ -52,11 +52,8 @@ export default function Command() {
   }
 
   useEffect(() => {
-    // If we already have data from Cache (sync init), do nothing.
-    // The interval in package.json handles periodic refresh — clicking the
-    // menu bar must NOT trigger a scan (prevents visible flicker).
-    if (updates.length > 0) return;
-    // First run (no cache) — scan now.
+    // Always scan on command launch. The sync cache init keeps UI stable
+    // while the interval-triggered refresh fetches fresh data.
     scan();
   }, []);
 
