@@ -11,7 +11,7 @@ export async function getDesktopContext(): Promise<DesktopContext | null> {
   if (!environment.canAccess(WindowManagement)) {
     await showFailureToast("WindowManagement Not Available", {
       message:
-        "This extension requires Raycast Pro and Accessibility permission. Make sure you are signed in with a Pro account and have granted Accessibility access in System Settings → Privacy & Security → Accessibility, then fully quit and reopen Raycast.",
+        "Requires Raycast Pro and Accessibility permission. Grant access in System Settings → Privacy & Security → Accessibility, then restart Raycast.",
     });
     return null;
   }
