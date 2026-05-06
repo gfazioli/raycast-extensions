@@ -1,6 +1,6 @@
 # App Updates Changelog
 
-## [Initial Version] - {PR_MERGE_DATE}
+## [Initial Version] - 2026-05-06
 
 - Scan installed apps for available updates via three sources: Sparkle, Homebrew Cask, and Mac App Store
 - Display app icon, name, current and latest version grouped by source
