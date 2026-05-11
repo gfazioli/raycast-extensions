@@ -6,26 +6,25 @@ import { scanDocker } from "./docker";
 import { scanProjectArtifacts } from "./project-artifacts";
 import { scanSystem } from "./system";
 
+/**
+ * Run all scanners in parallel. Individual scanners can still fail independently
+ * (each has its own try/catch internally) without affecting the others.
+ */
 export async function scanAll(onProgress?: (step: string) => void): Promise<ScanResult[]> {
+  onProgress?.("Scanning caches...");
+
+  const settled = await Promise.allSettled([
+    scanPackageCaches(),
+    scanProjectArtifacts(),
+    scanXcode(),
+    scanDocker(),
+    scanLanguageCaches(),
+    scanSystem(),
+  ]);
+
   const results: ScanResult[] = [];
-
-  onProgress?.("Scanning package manager caches...");
-  results.push(...(await scanPackageCaches()));
-
-  onProgress?.("Scanning build artifacts and dependencies...");
-  results.push(...(await scanProjectArtifacts()));
-
-  onProgress?.("Scanning Xcode caches...");
-  results.push(...(await scanXcode()));
-
-  onProgress?.("Scanning Docker...");
-  results.push(...(await scanDocker()));
-
-  onProgress?.("Scanning language caches...");
-  results.push(...(await scanLanguageCaches()));
-
-  onProgress?.("Scanning system caches...");
-  results.push(...(await scanSystem()));
-
+  for (const s of settled) {
+    if (s.status === "fulfilled") results.push(...s.value);
+  }
   return results;
 }

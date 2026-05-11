@@ -72,20 +72,18 @@ function getPruneCommand(type: string): { display: string; args: string[] } {
 }
 
 function parseDockerSize(sizeStr: string): number {
-  const match = sizeStr.match(/^([\d.]+)\s*(B|kB|MB|GB|TB)/i);
+  const match = sizeStr.match(/^([\d.]+)\s*(B|kB|MB|GB|TB|PB)/i);
   if (!match) return 0;
   const value = parseFloat(match[1]);
-  const unit = match[2];
-  // Docker uses SI (decimal) units
+  // Normalize to uppercase for lookup (Docker uses SI decimal units like "kB", "MB", "GB")
+  const unit = match[2].toUpperCase();
   const multipliers: Record<string, number> = {
     B: 1,
-    kB: 1000,
     KB: 1000,
     MB: 1000 ** 2,
-    mb: 1000 ** 2,
     GB: 1000 ** 3,
-    gb: 1000 ** 3,
     TB: 1000 ** 4,
+    PB: 1000 ** 5,
   };
   return Math.round(value * (multipliers[unit] ?? 1));
 }

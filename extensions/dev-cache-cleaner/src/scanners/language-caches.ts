@@ -88,14 +88,15 @@ export async function scanLanguageCaches(): Promise<ScanResult[]> {
     results.push({
       id: "ruby-gem-cache",
       title: "Ruby Gem Cache",
-      description: `Cached gem files (${formatBytes(size)}). Safe to clean — gems re-download on next install.`,
+      description: `Old gem versions and download cache (up to ${formatBytes(size)}). Safe to clean — keeps the latest installed gems.`,
       category: "language-caches",
       path: rubyGemPath,
       size,
       risk: "safe",
-      available: true,
-      cleanCommand: "rm -rf ~/.gem",
-      cleanAction: { type: "rmrf" },
+      available: await isToolAvailableAsync("gem"),
+      cleanCommand: "gem cleanup",
+      cleanAction: { type: "command", command: "gem", args: ["cleanup"] },
+      requiresTool: "gem",
       icon: "code",
     });
   }
