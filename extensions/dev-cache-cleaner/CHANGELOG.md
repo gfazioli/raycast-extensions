@@ -1,6 +1,6 @@
 # Dev Cache Cleaner Changelog
 
-## [Initial Version] - {PR_MERGE_DATE}
+## [Initial Version] - 2026-05-12
 
 - Scan Caches: full scan across 6 categories with detail panel, risk indicators, and selective cleanup
 - Quick Clean: one-click cleanup of all safe caches
