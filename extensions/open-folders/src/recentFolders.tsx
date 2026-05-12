@@ -10,6 +10,7 @@ export default function Command() {
   useEffect(() => {
     getRecentFolders()
       .then(setRecent)
+      .catch(() => showToast({ style: Toast.Style.Failure, title: "Could not load recent folders" }))
       .finally(() => setIsLoading(false));
   }, []);
 

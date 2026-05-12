@@ -179,6 +179,7 @@ export function FileList({ items, layout, showPins, navigable, isLoading, naviga
               key={entry.fullPath}
               content={{ fileIcon: entry.fullPath }}
               title={entry.name}
+              quickLook={{ path: entry.fullPath }}
               actions={<FileActions entry={entry} navigable={navigable} showPins={showPins} onPinToggle={reloadPins} />}
             />
           ))}
@@ -191,6 +192,7 @@ export function FileList({ items, layout, showPins, navigable, isLoading, naviga
             content={{ fileIcon: entry.fullPath }}
             title={entry.name}
             subtitle={entry.isFile && entry.size > 0 ? formatSize(entry.size) : undefined}
+            quickLook={{ path: entry.fullPath }}
             actions={<FileActions entry={entry} navigable={navigable} showPins={showPins} onPinToggle={reloadPins} />}
           />
         ))}
