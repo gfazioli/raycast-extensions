@@ -115,14 +115,20 @@ function FileActions({
 export function FileList({ items, layout, showPins, navigable, isLoading, navigationTitle }: FileListProps) {
   const [pinnedPaths, setPinnedPaths] = useState<string[]>([]);
 
+  function loadPins() {
+    getPinnedFolders()
+      .then(setPinnedPaths)
+      .catch(() => showToast({ style: Toast.Style.Failure, title: "Could not load pinned folders" }));
+  }
+
   useEffect(() => {
     if (showPins) {
-      getPinnedFolders().then(setPinnedPaths);
+      loadPins();
     }
   }, [showPins]);
 
   function reloadPins() {
-    getPinnedFolders().then(setPinnedPaths);
+    loadPins();
   }
 
   const pinnedSet = new Set(pinnedPaths);
