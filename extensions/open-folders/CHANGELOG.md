@@ -1,6 +1,6 @@
 # Open Changelog
 
-## [Code Quality & Bug Fixes] - {PR_MERGE_DATE}
+## [Code Quality & Bug Fixes] - 2026-05-12
 
 ### Bug Fixes
 - Fixed crash when opening most recent download from an empty directory
