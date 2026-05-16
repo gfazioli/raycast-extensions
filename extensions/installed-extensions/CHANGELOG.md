@@ -2,7 +2,7 @@
 
 ## [Fix Fresh Install Crash] - {PR_MERGE_DATE}
 
-- Treat a missing `~/.config/raycast/extensions` directory as an empty list instead of throwing `ENOENT` on fresh Raycast installs with no extensions yet
+- Treat a missing extensions directory (`~/.config/raycast/extensions` on macOS, `~/.config/raycast-x/extensions` on Windows) as an empty list instead of throwing `ENOENT` on fresh Raycast installs with no extensions yet
 
 ## [Sort by Recently Updated] - 2026-04-24
 
