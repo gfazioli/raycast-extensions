@@ -3,7 +3,7 @@
 ## [More Tweaks & Sound Category] - {PR_MERGE_DATE}
 
 ### New Category
-- **Sound**: toggle UI sound effects and volume change feedback beep
+- **Sound**: User Interface Sound Effects, Volume Change Feedback Sound
 
 ### New Tweaks (35)
 - **Dock**: Magnification + Magnification Size, Show Only Open Apps (`static-only`), Launch Bounce Animation, Group Windows by App in Mission Control, Highlight Stack Items on Hover
@@ -14,6 +14,7 @@
 - **Safari**: Internal Debug Menu, Disable Search Engine Suggestions, Always Restore Session at Launch
 - **Menu Bar & UI**: Show Sound, Battery Percentage, AirDrop, Screen Mirroring, Focus, Now Playing, Fast User Switching in the menu bar
 - **Animations**: Reduce Motion and Reduce Transparency — perceived performance on older Macs
+- **Security & Privacy**: Limit Ad Tracking, Personalized Apple Ads
 
 ### Improvements
 - Detail view now displays macOS version constraints (`minMacOS` / `maxMacOS`) when set on a tweak
