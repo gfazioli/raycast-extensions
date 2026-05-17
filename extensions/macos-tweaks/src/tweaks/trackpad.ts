@@ -104,7 +104,7 @@ export const trackpadTweaks: TweakDefinition[] = [
     type: "boolean",
     defaultValue: true,
     extraDefaults: [
-      { domain: "com.apple.driver.AppleBluetoothMultitouch.trackpad", key: "TrackpadRightClick", value: true },
+      { domain: "com.apple.driver.AppleBluetoothMultitouch.trackpad", key: "TrackpadRightClick", mirrorPrimary: true },
     ],
     risk: "safe",
     tags: ["click", "right click", "secondary"],

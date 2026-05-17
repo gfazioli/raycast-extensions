@@ -19,6 +19,9 @@
 ### Improvements
 - Detail view now displays macOS version constraints (`minMacOS` / `maxMacOS`) when set on a tweak
 
+### Fixes
+- Two-Finger Secondary Click: keep both built-in and Bluetooth trackpad domains in sync — previously the Bluetooth domain ended up with the opposite value
+
 ## [Initial Version] - 2026-04-30
 
 - Browse Tweaks: list and toggle 73 hidden macOS settings across 13 categories
