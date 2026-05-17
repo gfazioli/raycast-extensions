@@ -1,6 +1,6 @@
 # macOS Tweaks Changelog
 
-## [More Tweaks & Sound Category] - {PR_MERGE_DATE}
+## [More Tweaks & Sound Category] - 2026-05-17
 
 ### New Category
 - **Sound**: User Interface Sound Effects, Volume Change Feedback Sound
