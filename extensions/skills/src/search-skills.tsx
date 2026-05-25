@@ -1,31 +1,34 @@
-import { List, ActionPanel, Action, Icon } from "@raycast/api";
-import { useState } from "react";
+import { List, ActionPanel, Action, Detail, Icon } from "@raycast/api";
+import { useCallback, useState } from "react";
 
-import { CommandEmptyView, CommandErrorDetail, RetryAction } from "./components/CommandStates";
+import { ensureSupportDir } from "./utils/ensure-support-dir";
 import { SkillListItem } from "./components/SkillListItem";
+import { useInstalledSkillMatches } from "./hooks/useInstalledSkillMatches";
 import { useOwnerFilter } from "./hooks/useOwnerFilter";
 import { useDebouncedSearch } from "./hooks/useDebouncedSearch";
 import { buildGithubIssueUrl } from "./shared";
 
+ensureSupportDir();
+
 export default function Command() {
   const [searchText, setSearchText] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isShowingDetail, setIsShowingDetail] = useState(true);
-  const toggleDetail = () => setIsShowingDetail((prev) => !prev);
 
-  const { data, isLoading, error, revalidate, searchUrl } = useDebouncedSearch(searchText);
-
+  const { data, isLoading, error, revalidate: revalidateSearch, searchUrl } = useDebouncedSearch(searchText);
+  const { getInstalledMatch, revalidate: revalidateInstalledSkillMatches } = useInstalledSkillMatches();
   const { owner, setOwner, ownerCounts, skills } = useOwnerFilter(data?.skills ?? []);
+
+  const refreshCurrentResults = useCallback(async () => {
+    await Promise.all([revalidateSearch(), revalidateInstalledSkillMatches()]);
+  }, [revalidateSearch, revalidateInstalledSkillMatches]);
 
   if (error && !data) {
     return (
-      <CommandErrorDetail
-        title="Unable to Load Search Results"
-        message={error.message}
-        detailsMarkdown="The Skills API request failed, so the primary search content could not be shown.\n\nRetry the search. If the problem persists, report it on GitHub."
+      <Detail
+        markdown={`# Unable to Load Search Results\n\n**Error:** ${error.message}\n\n---\n\nThe Skills API request failed, so the primary search content could not be shown.\n\nRetry the search. If the problem persists, report it on GitHub.`}
         actions={
           <ActionPanel>
-            <RetryAction onAction={revalidate} />
+            <Action title="Retry" onAction={revalidateSearch} icon={Icon.RotateClockwise} />
             <Action.OpenInBrowser
               title="Report Issue on GitHub"
               url={buildGithubIssueUrl({
@@ -52,7 +55,7 @@ export default function Command() {
       searchBarPlaceholder="Search skills..."
       onSearchTextChange={setSearchText}
       onSelectionChange={setSelectedId}
-      isShowingDetail={skills.length > 0 && isShowingDetail}
+      selectedItemId={selectedId ?? undefined}
       searchBarAccessory={
         <List.Dropdown tooltip="Filter by Owner" value={owner} storeValue onChange={setOwner}>
           <List.Dropdown.Item title="All Owners" value="all" />
@@ -65,19 +68,19 @@ export default function Command() {
       }
     >
       {searchText.length < 2 ? (
-        <CommandEmptyView
+        <List.EmptyView
           title="Search Skills"
           description="Type at least 2 characters to search."
           icon={Icon.MagnifyingGlass}
         />
       ) : skills.length === 0 && !isLoading ? (
-        <CommandEmptyView
+        <List.EmptyView
           title="No Search Results"
           description={`No results found for "${searchText}". Try different keywords.`}
           icon={Icon.MagnifyingGlass}
           actions={
             <ActionPanel>
-              <RetryAction onAction={revalidate} />
+              <Action title="Retry" onAction={revalidateSearch} icon={Icon.RotateClockwise} />
             </ActionPanel>
           }
         />
@@ -87,9 +90,9 @@ export default function Command() {
             <SkillListItem
               key={skill.id}
               skill={skill}
-              isSelected={selectedId === skill.id}
-              isShowingDetail={isShowingDetail}
-              onToggleDetail={toggleDetail}
+              installedMatch={getInstalledMatch(skill)}
+              onViewedSkillChange={setSelectedId}
+              onSkillInstalled={refreshCurrentResults}
             />
           ))}
         </List.Section>

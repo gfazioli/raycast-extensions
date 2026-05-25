@@ -1,5 +1,33 @@
 # Agent Usage Changelog
 
+## [Add OpenCode Go Provider] - 2026-05-15
+
+- Add OpenCode Go plan usage display
+
+## [Add MiniMax Provider] - 2026-04-30
+
+### New Features
+
+- Add MiniMax provider — monitor 5h interval and weekly coding plan quotas from MiniMax API
+- Auto-detect MiniMax credentials from OpenCode (`minimax-coding-plan`) or `MINIMAX_API_KEY` environment variable
+- Manual token support via extension preferences
+
+## [Add Copilot Usage Provider] - 2026-04-14
+
+- Add Copilot usage provider with GitHub Copilot internal API support
+- Auto-detect Copilot token from `GH_TOKEN` / `GITHUB_TOKEN` with preference fallback
+- Add Copilot visibility preference and list/menu bar entries
+
+## [Add Windows Support] - 2026-04-12
+
+- Add Windows support
+
+## [Support Droid Encrypted Auth v2] - 2026-04-12
+
+### Improvements
+
+- Support Factory Droid's new encrypted auth v2 format with backward compatibility for legacy auth files
+
 ## [Synthetic Provider and OpenCode Integration] - 2026-04-09
 
 ### New Features

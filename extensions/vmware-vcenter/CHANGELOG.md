@@ -1,5 +1,13 @@
 # VMware vCenter Changelog
 
+## [Fix] - 2026-05-14
+
+- Fixed the error when trying to configure the first server.
+
+## [Improvement] - 2026-04-12
+
+- Performance Improvement.
+
 ## [Improvement] - 2026-04-04
 
 - [Improvement] Added 'Parallels Client' as RDP Client for macOS.

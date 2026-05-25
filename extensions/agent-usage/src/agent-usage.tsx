@@ -26,6 +26,9 @@ import type { ClaudeError, ClaudeUsage } from "./claude/types";
 import { useCodexUsage, useCodexAccounts } from "./codex/fetcher";
 import { formatCodexUsageText, getCodexAccessory, renderCodexDetail } from "./codex/renderer";
 import type { CodexError, CodexUsage } from "./codex/types";
+import { useCopilotUsage } from "./copilot/fetcher";
+import { formatCopilotUsageText, getCopilotAccessory, renderCopilotDetail } from "./copilot/renderer";
+import type { CopilotError, CopilotUsage } from "./copilot/types";
 import { useDroidUsage } from "./droid/fetcher";
 import { formatDroidUsageText, getDroidAccessory, renderDroidDetail } from "./droid/renderer";
 import type { DroidError, DroidUsage } from "./droid/types";
@@ -42,6 +45,12 @@ import type { SyntheticError, SyntheticUsage } from "./synthetic/types";
 import { useZaiUsage, useZaiAccounts } from "./zai/fetcher";
 import { formatZaiUsageText, getZaiAccessory, renderZaiDetail } from "./zai/renderer";
 import type { ZaiError, ZaiUsage } from "./zai/types";
+import { useMiniMaxUsage } from "./minimax/fetcher";
+import { formatMiniMaxUsageText, getMiniMaxAccessory, renderMiniMaxDetail } from "./minimax/renderer";
+import type { MiniMaxError, MiniMaxUsage } from "./minimax/types";
+import { useOpencodegoUsage } from "./opencode-go/fetcher";
+import { formatOpencodegoUsageText, getOpencodegoAccessory, renderOpencodegoDetail } from "./opencode-go/renderer";
+import type { OpencodegoError, OpencodegoUsage } from "./opencode-go/types";
 import { ManageAccountsForm } from "./accounts/ManageAccountsForm";
 import type { AccountUsageState } from "./accounts/types";
 
@@ -62,24 +71,30 @@ interface AgentUsageById {
   amp: AmpUsage;
   claude: ClaudeUsage;
   codex: CodexUsage;
+  copilot: CopilotUsage;
   droid: DroidUsage;
   gemini: GeminiUsage;
   kimi: KimiUsage;
   synthetic: SyntheticUsage;
   antigravity: AntigravityUsage;
   zai: ZaiUsage;
+  minimax: MiniMaxUsage;
+  "opencode-go": OpencodegoUsage;
 }
 
 interface AgentErrorById {
   amp: AmpError;
   claude: ClaudeError;
   codex: CodexError;
+  copilot: CopilotError;
   droid: DroidError;
   gemini: GeminiError;
   kimi: KimiError;
   synthetic: SyntheticError;
   antigravity: AntigravityError;
   zai: ZaiError;
+  minimax: MiniMaxError;
+  "opencode-go": OpencodegoError;
 }
 
 type AgentRegistry = {
@@ -161,6 +176,18 @@ const AGENT_REGISTRY: AgentRegistry = {
     getAccessory: getCodexAccessory,
     formatUsageText: formatCodexUsageText,
   },
+  copilot: {
+    id: "copilot",
+    name: "Copilot",
+    icon: "copilot-icon.svg",
+    description: "GitHub Copilot",
+    isSupported: true,
+    settingsUrl: "https://github.com/settings/copilot",
+    useUsage: useCopilotUsage,
+    renderDetail: renderCopilotDetail,
+    getAccessory: getCopilotAccessory,
+    formatUsageText: formatCopilotUsageText,
+  },
   droid: {
     id: "droid",
     name: "Droid",
@@ -231,6 +258,30 @@ const AGENT_REGISTRY: AgentRegistry = {
     getAccessory: getZaiAccessory,
     formatUsageText: formatZaiUsageText,
   },
+  minimax: {
+    id: "minimax",
+    name: "MiniMax",
+    icon: "minimax-icon.svg",
+    description: "MiniMax AI Coding Assistant",
+    isSupported: true,
+    settingsUrl: "https://www.minimax.io",
+    useUsage: useMiniMaxUsage,
+    renderDetail: renderMiniMaxDetail,
+    getAccessory: getMiniMaxAccessory,
+    formatUsageText: formatMiniMaxUsageText,
+  },
+  "opencode-go": {
+    id: "opencode-go",
+    name: "OpenCode Go",
+    icon: "opencode-go-icon.png",
+    description: "OpenCode Go Subscription",
+    isSupported: true,
+    settingsUrl: "https://opencode.ai",
+    useUsage: useOpencodegoUsage,
+    renderDetail: renderOpencodegoDetail,
+    getAccessory: getOpencodegoAccessory,
+    formatUsageText: formatOpencodegoUsageText,
+  },
 };
 
 const AGENT_IDS = Object.keys(AGENT_REGISTRY) as AgentId[];
@@ -299,9 +350,12 @@ export default function Command(props: LaunchProps<{ launchContext: CommandLaunc
   // Hooks must be called unconditionally at top level (React rules)
   const ampState = AGENT_REGISTRY.amp.useUsage(Boolean(prefs.showAmp));
   const claudeState = AGENT_REGISTRY.claude.useUsage(Boolean(prefs.showClaude));
+  const copilotState = AGENT_REGISTRY.copilot.useUsage(Boolean(prefs.showCopilot));
   const droidState = AGENT_REGISTRY.droid.useUsage(Boolean(prefs.showDroid));
   const geminiState = AGENT_REGISTRY.gemini.useUsage(Boolean(prefs.showGemini));
   const antigravityState = AGENT_REGISTRY.antigravity.useUsage(Boolean(prefs.showAntigravity));
+  const minimaxState = AGENT_REGISTRY.minimax.useUsage(Boolean(prefs.showMinimax));
+  const opencodegoState = AGENT_REGISTRY["opencode-go"].useUsage(Boolean(prefs.showOpencodeGo));
 
   // Multi-account providers
   const codexAccountStates = useCodexAccounts(Boolean(prefs.showCodex));
@@ -312,9 +366,12 @@ export default function Command(props: LaunchProps<{ launchContext: CommandLaunc
   const agentViews: Omit<Record<AgentId, AgentView>, "codex" | "kimi" | "synthetic" | "zai"> = {
     amp: createAgentView(AGENT_REGISTRY.amp, ampState, Boolean(prefs.showAmp)),
     claude: createAgentView(AGENT_REGISTRY.claude, claudeState, Boolean(prefs.showClaude)),
+    copilot: createAgentView(AGENT_REGISTRY.copilot, copilotState, Boolean(prefs.showCopilot)),
     droid: createAgentView(AGENT_REGISTRY.droid, droidState, Boolean(prefs.showDroid)),
     gemini: createAgentView(AGENT_REGISTRY.gemini, geminiState, Boolean(prefs.showGemini)),
     antigravity: createAgentView(AGENT_REGISTRY.antigravity, antigravityState, Boolean(prefs.showAntigravity)),
+    minimax: createAgentView(AGENT_REGISTRY.minimax, minimaxState, Boolean(prefs.showMinimax)),
+    "opencode-go": createAgentView(AGENT_REGISTRY["opencode-go"], opencodegoState, Boolean(prefs.showOpencodeGo)),
   };
 
   const kimiAccountedViews = createAccountedViews(

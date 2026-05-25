@@ -13,7 +13,9 @@
     "zzyfisher",
     "garrick_zhang",
     "pernielsentikaer",
-    "raulg"
+    "raulg",
+    "ridemountainpig",
+    "bendrucker"
   ],
   "license": "MIT",
   "commands": [
@@ -30,6 +32,7 @@
       "subtitle": "ccusage",
       "description": "Show Claude Code usage in menu bar",
       "mode": "menu-bar",
+      "interval": "5m",
       "preferences": [
         {
           "name": "menuBarTitle",
@@ -46,6 +49,10 @@
             {
               "title": "Today's Cost",
               "value": "todayCost"
+            },
+            {
+              "title": "Weekly Cost",
+              "value": "weeklyCost"
             },
             {
               "title": "Monthly Cost",
@@ -66,6 +73,10 @@
             {
               "title": "Highest Utilization",
               "value": "utilization"
+            },
+            {
+              "title": "Block Projection",
+              "value": "blockProjection"
             },
             {
               "title": "None",
@@ -147,6 +158,10 @@
         {
           "title": "Today Usage",
           "value": "today"
+        },
+        {
+          "title": "This Week",
+          "value": "week"
         },
         {
           "title": "Session Usage",

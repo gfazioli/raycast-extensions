@@ -20,6 +20,7 @@ import {
   safeTruncate,
   SessionMetadata,
   SessionDetail,
+  PermissionMode,
 } from "./lib/session-parser";
 import { launchClaudeCode } from "./lib/terminal";
 import { ensureClaudeInstalled } from "./lib/claude-cli";
@@ -162,6 +163,7 @@ function SessionItem({
     await launchClaudeCode({
       projectPath: session.projectPath,
       sessionId: session.id,
+      permissionMode: session.permissionMode,
     });
     await popToRoot();
   }
@@ -180,6 +182,7 @@ function SessionItem({
       projectPath: session.projectPath,
       sessionId: session.id,
       forkSession: true,
+      permissionMode: session.permissionMode,
     });
     await popToRoot();
   }
@@ -232,6 +235,7 @@ function SessionItem({
                 <SessionDetailView
                   sessionId={session.id}
                   projectPath={session.projectPath}
+                  permissionMode={session.permissionMode}
                 />
               }
             />
@@ -268,9 +272,11 @@ function SessionItem({
 function SessionDetailView({
   sessionId,
   projectPath,
+  permissionMode,
 }: {
   sessionId: string;
   projectPath: string;
+  permissionMode?: PermissionMode;
 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<SessionDetail | null>(null);
@@ -342,6 +348,7 @@ function SessionDetailView({
               await launchClaudeCode({
                 projectPath,
                 sessionId,
+                permissionMode,
               });
               await popToRoot();
             }}
@@ -363,6 +370,7 @@ function SessionDetailView({
                 projectPath,
                 sessionId,
                 forkSession: true,
+                permissionMode,
               });
               await popToRoot();
             }}
@@ -384,28 +392,40 @@ function formatSessionMarkdown(session: SessionDetail): string {
     md += `> ${session.summary}\n\n`;
   }
 
+  // Render budget is 20 messages; the banner reflects what the user actually sees.
+  const rendered = session.messages.slice(-20);
+  if (session.totalMessageCount > rendered.length) {
+    md += `*Showing last ${rendered.length} of ${session.totalMessageCount} messages.*\n\n`;
+  }
+
   md += `---\n\n`;
   md += `## Conversation\n\n`;
 
-  for (const message of session.messages.slice(0, 20)) {
+  for (const message of rendered) {
     const role = message.type === "user" ? "**You**" : "**Claude**";
     const content = safeTruncate(message.content, 500, "...");
 
     md += `${role}:\n${content}\n\n`;
   }
 
-  if (session.messages.length > 20) {
-    md += `\n*...and ${session.messages.length - 20} more messages*\n`;
-  }
-
   return md;
 }
 
 function formatConversationText(session: SessionDetail): string {
-  return session.messages
+  // session.messages is already capped (default last 200) by the parser.
+  // The clipboard reflects what the user is actually viewing.
+  const body = session.messages
     .map((m) => {
       const role = m.type === "user" ? "User" : "Claude";
       return `${role}: ${m.content}`;
     })
     .join("\n\n");
+
+  if (session.totalMessageCount > session.messages.length) {
+    return (
+      body +
+      `\n\n[truncated: copied last ${session.messages.length} of ${session.totalMessageCount} messages]`
+    );
+  }
+  return body;
 }
