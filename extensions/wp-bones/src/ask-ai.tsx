@@ -24,10 +24,11 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
   const mountedRef = useRef(true);
 
   const searchQuery = question.split(" ").slice(0, 3).join(" ");
-  const { data: docs, isLoading: isLoadingDocs } = useFetch<Document[]>(
-    `${API_URL}${encodeURIComponent(searchQuery)}`,
-    { keepPreviousData: false },
-  );
+  const {
+    data: docs,
+    error: docsError,
+    isLoading: isLoadingDocs,
+  } = useFetch<Document[]>(`${API_URL}${encodeURIComponent(searchQuery)}`, { keepPreviousData: false });
 
   useEffect(() => {
     return () => {
@@ -36,7 +37,7 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
   }, []);
 
   useEffect(() => {
-    if (!docs || isAskingRef.current) return;
+    if (!docs || docsError || isAskingRef.current) return;
     isAskingRef.current = true;
     setIsAsking(true);
 
@@ -74,10 +75,19 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
       });
   }, [docs, question]);
 
+  let markdown: string;
+  if (answer) {
+    markdown = answer;
+  } else if (docsError) {
+    markdown = `#### Failed to load documentation\n\nUnable to fetch context for your question. ${docsError.message}`;
+  } else {
+    markdown = `#### Searching documentation for: "${question}"...`;
+  }
+
   return (
     <Detail
       isLoading={isLoadingDocs || isAsking}
-      markdown={answer || `#### Searching documentation for: "${question}"...`}
+      markdown={markdown}
       actions={
         <ActionPanel>
           <Action.CopyToClipboard title="Copy Answer" content={answer} />

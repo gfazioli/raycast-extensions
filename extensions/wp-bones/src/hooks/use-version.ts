@@ -54,10 +54,18 @@ export function useVersion() {
 
   useEffect(() => {
     if (data && versionStorage !== undefined) {
-      // Migrate old storage format (170) to new format (1_007_000)
-      const stored = versionStorage < 10000 ? versionStorage * 1000 : versionStorage;
       const num = versionToNumber(data.version);
-      if (num > stored) {
+      // The old storage format ("170" for "1.7.0") cannot be deterministically
+      // decoded into major/minor/patch, so we cannot safely compare it against
+      // the new format. Treat any value below the minimum new-format value
+      // (1_000_000 = 1.0.0) as stale and silently adopt the current version as
+      // the baseline. The user may miss a single notification at the migration
+      // boundary, but never gets a false positive.
+      if (versionStorage < 1_000_000) {
+        LocalStorage.setItem(STORAGE_KEY, num).catch(() => {
+          // Best-effort write: ignore filesystem failures (e.g. ENOSPC).
+        });
+      } else if (num > versionStorage) {
         setIsThereNewVersion(true);
       }
       setVersion(data.version);
