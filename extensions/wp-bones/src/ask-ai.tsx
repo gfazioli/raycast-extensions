@@ -43,6 +43,7 @@ export default function Command(props: LaunchProps<{ arguments: { question: stri
 
     const context = Array.isArray(docs)
       ? docs
+          .filter((d): d is Document => typeof d === "object" && d !== null && Array.isArray(d.items))
           .flatMap((d) => d.items.map((item) => `## ${item.title}\n${item.excerpt}\nURL: ${item.url}`))
           .slice(0, 5)
           .join("\n\n---\n\n")
