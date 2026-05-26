@@ -1,6 +1,6 @@
 # WP Bones Changelog
 
-## [Fixes] - {PR_MERGE_DATE}
+## [Fixes] - 2026-05-26
 
 - Hardened menu-bar storage reads/writes against filesystem failures (e.g. `ENOSPC`) so the command no longer crashes when the Raycast cache journal can't be written
 - Fixed a faulty migration of the legacy version-storage format that could trigger a false "new version available" notification on every menu-bar launch; stale values are now discarded silently
